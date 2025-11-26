@@ -6,7 +6,6 @@ jQuery(document).ready(function($) {
             this.bindEvents();
             this.initColorPickers();
             this.initTabs();
-            console.log('Advent Calendar Admin initialized');
         },
 
         bindEvents: function() {
@@ -17,6 +16,7 @@ jQuery(document).ready(function($) {
             $('#cancel-door').on('click', this.cancelDoorEdit.bind(this));
             $('#upload-door-image').on('click', this.uploadImage.bind(this));
             $('input[name="door_type"]').on('change', this.toggleDoorType.bind(this));
+            $(document).on('click', '.copy-shortcode', this.copyShortcode.bind(this));
         },
 
         initColorPickers: function() {
@@ -37,13 +37,11 @@ jQuery(document).ready(function($) {
 
         saveCalendar: function(e) {
             e.preventDefault();
-            console.log('Advent Calendar: Save button clicked');
 
             const button = $('#save-calendar');
             const title = $('#calendar-title').val().trim();
 
             if (!title) {
-                console.log('Advent Calendar: Validation failed - empty title');
                 this.showMessage('Nazwa kalendarza jest wymagana!', 'error');
                 $('#calendar-title').focus();
                 return;
@@ -69,8 +67,6 @@ jQuery(document).ready(function($) {
                 formData.id = parseInt(calendarId);
             }
 
-            console.log('Advent Calendar: Sending AJAX data:', formData);
-
             button.prop('disabled', true).addClass('loading');
             button.html('<span class="spinner"></span> Zapisywanie...');
 
@@ -79,10 +75,7 @@ jQuery(document).ready(function($) {
                 type: 'POST',
                 data: formData,
                 success: (response) => {
-                    console.log('Advent Calendar: AJAX response received:', response);
-                    
                     if (response.success) {
-                        console.log('Advent Calendar: Save successful');
                         this.showMessage(response.data.message, 'success');
                         
                         if (response.data.redirect) {
@@ -93,19 +86,15 @@ jQuery(document).ready(function($) {
                             $('#calendar-id').val(response.data.id);
                         }
                     } else {
-                        console.log('Advent Calendar: Save failed with error:', response.data);
                         this.showMessage(response.data || 'Wystąpił nieznany błąd', 'error');
                     }
                 },
                 error: (xhr, status, error) => {
-                    console.error('Advent Calendar: AJAX Error:', error);
-                    console.error('Advent Calendar: Status:', status);
-                    console.error('Advent Calendar: XHR response:', xhr.responseText);
                     this.showMessage('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
                 },
                 complete: () => {
                     button.prop('disabled', false).removeClass('loading');
-                    button.html('Zapisz Kalendarz');
+                    button.html(calendarId ? 'Zaktualizuj Kalendarz' : 'Utwórz Kalendarz');
                 }
             });
         },
@@ -130,11 +119,14 @@ jQuery(document).ready(function($) {
                 },
                 success: (response) => {
                     if (response.success) {
-                        button.closest('.calendar-card').fadeOut();
+                        button.closest('.calendar-card').fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                        this.showMessage('Kalendarz usunięty pomyślnie!', 'success');
                     } else {
                         this.showMessage(response.data, 'error');
                     }
-                },
+                }.bind(this),
                 error: () => {
                     this.showMessage('Błąd podczas usuwania', 'error');
                 }
@@ -159,28 +151,34 @@ jQuery(document).ready(function($) {
 
             const doorId = doorItem.data('door-id');
             if (doorId) {
-                $.ajax({
-                    url: adventCalendar.ajaxurl,
-                    type: 'POST',
-                    data: {
-                        action: 'advent_calendar_get_door',
-                        nonce: adventCalendar.nonce,
-                        door_id: doorId
-                    },
-                    success: (response) => {
-                        if (response.success) {
-                            this.populateDoorForm(response.data);
-                        } else {
-                            this.resetDoorForm(doorNumber);
-                        }
-                    },
-                    error: () => {
-                        this.resetDoorForm(doorNumber);
-                    }
-                });
+                this.loadDoorData(doorId);
             } else {
                 this.resetDoorForm(doorNumber);
             }
+        },
+
+        loadDoorData: function(doorId) {
+            $.ajax({
+                url: adventCalendar.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'advent_calendar_get_door',
+                    nonce: adventCalendar.nonce,
+                    door_id: doorId
+                },
+                success: (response) => {
+                    if (response.success) {
+                        this.populateDoorForm(response.data);
+                    } else {
+                        this.showMessage('Błąd podczas ładowania danych drzwi', 'error');
+                        this.resetDoorForm($('#door-number').val());
+                    }
+                },
+                error: () => {
+                    this.showMessage('Błąd połączenia podczas ładowania drzwi', 'error');
+                    this.resetDoorForm($('#door-number').val());
+                }
+            });
         },
 
         populateDoorForm: function(doorData) {
@@ -230,12 +228,25 @@ jQuery(document).ready(function($) {
             e.preventDefault();
 
             const button = $('#save-door');
+            const calendarId = $('#calendar-id').val();
+            const doorNumber = $('#door-number').val();
+
+            if (!calendarId) {
+                this.showMessage('Najpierw zapisz kalendarz!', 'error');
+                return;
+            }
+
+            if (!doorNumber) {
+                this.showMessage('Numer drzwi jest wymagany!', 'error');
+                return;
+            }
+
             const formData = {
                 action: 'advent_calendar_save_door',
                 nonce: adventCalendar.nonce,
                 door_id: $('#door-id').val(),
-                calendar_id: $('#calendar-id').val(),
-                door_number: $('#door-number').val(),
+                calendar_id: calendarId,
+                door_number: doorNumber,
                 title: $('#door-title').val(),
                 content: $('#door-content').val(),
                 image_url: $('#door-image').val(),
@@ -256,16 +267,23 @@ jQuery(document).ready(function($) {
                 success: (response) => {
                     if (response.success) {
                         this.showMessage(response.data.message, 'success');
+                        
                         if (response.data.id) {
-                            $('.door-editor-item.active').data('door-id', response.data.id);
-                            $('.door-editor-item.active').addClass('has-content');
+                            const activeDoor = $('.door-editor-item.active');
+                            activeDoor.data('door-id', response.data.id);
+                            activeDoor.addClass('has-content saved');
+                            
+                            activeDoor.find('.door-status')
+                                .removeClass('empty')
+                                .addClass('configured')
+                                .html('<span class="dashicons dashicons-yes-alt"></span>');
                         }
                     } else {
-                        this.showMessage(response.data, 'error');
+                        this.showMessage(response.data || 'Wystąpił nieznany błąd podczas zapisywania drzwi', 'error');
                     }
                 },
-                error: () => {
-                    this.showMessage('Błąd połączenia', 'error');
+                error: (xhr, status, error) => {
+                    this.showMessage('Błąd połączenia z serwerem podczas zapisywania drzwi. Spróbuj ponownie.', 'error');
                 },
                 complete: () => {
                     button.prop('disabled', false).removeClass('loading');
@@ -274,7 +292,7 @@ jQuery(document).ready(function($) {
             });
         },
 
-                cancelDoorEdit: function() {
+        cancelDoorEdit: function() {
             $('#door-form').hide();
             $('.door-editor-item').removeClass('active');
             this.resetDoorForm(1);
@@ -321,6 +339,22 @@ jQuery(document).ready(function($) {
             }
         },
 
+        copyShortcode: function(e) {
+            e.preventDefault();
+            const button = $(e.target);
+            const shortcode = button.data('shortcode');
+            
+            navigator.clipboard.writeText(shortcode).then(() => {
+                const originalText = button.text();
+                button.text('Skopiowano!');
+                setTimeout(() => {
+                    button.text(originalText);
+                }, 2000);
+            }).catch(() => {
+                this.showMessage('Błąd podczas kopiowania shortcode', 'error');
+            });
+        },
+
         showMessage: function(message, type) {
             const messageClass = type === 'success' ? 'notice-success' : 'notice-error';
             const notice = $('<div class="notice ' + messageClass + ' is-dismissible"><p>' + message + '</p></div>');
@@ -337,6 +371,5 @@ jQuery(document).ready(function($) {
         }
     };
 
-    // Initialize
     AdventCalendarAdmin.init();
 });

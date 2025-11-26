@@ -1,5 +1,4 @@
 <?php
-
 class Advent_Calendar_Export_Import {
     
     public function __construct() {
@@ -56,13 +55,11 @@ class Advent_Calendar_Export_Import {
             wp_die('Nieprawidłowy format pliku');
         }
         
-        // Import kalendarza
         $new_calendar_id = Advent_Calendar::save_calendar(array(
             'title' => $import_data['calendar']->title . ' (Import)',
             'settings' => json_decode($import_data['calendar']->settings, true)
         ));
         
-        // Import drzwi
         if (isset($import_data['doors'])) {
             foreach ($import_data['doors'] as $door) {
                 Advent_Calendar::save_door(array(
@@ -81,7 +78,6 @@ class Advent_Calendar_Export_Import {
             }
         }
         
-        // Import stylów
         if (isset($import_data['styles'])) {
             foreach ($import_data['styles'] as $style) {
                 Advent_Calendar_Styles::save_style(array(

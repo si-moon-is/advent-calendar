@@ -1,11 +1,9 @@
 <?php
-
 class Advent_Calendar_Frontend {
     
     public function __construct() {
         add_shortcode('advent_calendar', array($this, 'calendar_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
-        add_action('wp_head', array($this, 'add_custom_css'));
     }
     
     public function enqueue_scripts() {
@@ -19,19 +17,6 @@ class Advent_Calendar_Frontend {
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('advent_calendar_nonce')
         ));
-    }
-    
-    public function add_custom_css() {
-        global $post;
-        if ($post && has_shortcode($post->post_content, 'advent_calendar')) {
-            $calendars = Advent_Calendar::get_calendars();
-            foreach ($calendars as $calendar) {
-                $styles = Advent_Calendar_Styles::get_calendar_styles($calendar->id);
-                foreach ($styles as $style) {
-                    echo '<style>' . esc_html($style->custom_css) . '</style>';
-                }
-            }
-        }
     }
     
     public function calendar_shortcode($atts) {

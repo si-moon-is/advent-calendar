@@ -5,6 +5,7 @@ class Advent_Calendar_Frontend {
     public function __construct() {
         add_shortcode('advent_calendar', array($this, 'calendar_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+        add_action('wp_head', array($this, 'add_custom_css'));
     }
     
     public function enqueue_scripts() {
@@ -20,12 +21,34 @@ class Advent_Calendar_Frontend {
         ));
     }
     
+    public function add_custom_css() {
+        global $post;
+        if ($post && has_shortcode($post->post_content, 'advent_calendar')) {
+            $calendars = Advent_Calendar::get_calendars();
+            foreach ($calendars as $calendar) {
+                $styles = Advent_Calendar_Styles::get_calendar_styles($calendar->id);
+                foreach ($styles as $style) {
+                    echo '<style>' . esc_html($style->custom_css) . '</style>';
+                }
+            }
+        }
+    }
+    
     public function calendar_shortcode($atts) {
         $atts = shortcode_atts(array(
             'id' => 1,
             'columns' => 6,
-            'theme' => 'christmas'
+            'theme' => 'christmas',
+            'show_stats' => 'false'
         ), $atts);
+        
+        $calendar = Advent_Calendar::get_calendar($atts['id']);
+        if (!$calendar) {
+            return '<p>Kalendarz nie znaleziony</p>';
+        }
+        
+        $settings = json_decode($calendar->settings, true);
+        $doors = Advent_Calendar::get_calendar_doors($atts['id']);
         
         ob_start();
         include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/calendar-frontend.php';

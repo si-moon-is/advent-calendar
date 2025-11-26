@@ -1,3 +1,42 @@
+/* Reset i podstawowe style */
+.advent-calendar {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.advent-calendar * {
+    box-sizing: border-box;
+}
+
+.door-grid {
+    display: grid;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.door {
+    background: #f0f0f0;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.door:hover {
+    background: #e0e0e0;
+}
+
+.door.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.door.open {
+    background: #d4edda;
+    border-color: #28a745;
+}
 .advent-calendar {
     display: grid;
     gap: 15px;

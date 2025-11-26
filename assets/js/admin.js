@@ -6,6 +6,7 @@ jQuery(document).ready(function($) {
             this.bindEvents();
             this.initColorPickers();
             this.initTabs();
+            console.log('Advent Calendar Admin initialized');
         },
         
         bindEvents: function() {
@@ -29,7 +30,11 @@ jQuery(document).ready(function($) {
         },
         
         initColorPickers: function() {
-            $('.color-picker').wpColorPicker();
+            if (typeof $.fn.wpColorPicker !== 'undefined') {
+                $('.color-picker').wpColorPicker();
+            } else {
+                console.warn('wpColorPicker not available');
+            }
         },
         
         initTabs: function() {
@@ -46,13 +51,15 @@ jQuery(document).ready(function($) {
         
         saveCalendar: function(e) {
             e.preventDefault();
+            console.log('Saving calendar...');
             
-            const button = $(e.target);
+            const button = $('#save-calendar');
             const form = $('#calendar-form');
             
             button.prop('disabled', true).addClass('loading');
-            button.html('<span class="spinner"></span> ' + adventCalendarAdmin.translations.saving);
+            button.html('<span class="spinner"></span> Zapisywanie...');
             
+            // Pobierz dane z formularza
             const formData = {
                 action: 'save_calendar',
                 nonce: adventCalendarAdmin.nonce,
@@ -71,35 +78,37 @@ jQuery(document).ready(function($) {
             // Jeśli edytujemy istniejący kalendarz
             const calendarId = $('#calendar-id').val();
             if (calendarId) {
-                formData.id = calendarId;
+                formData.id = parseInt(calendarId);
             }
+            
+            console.log('Sending data:', formData);
             
             $.ajax({
                 url: adventCalendarAdmin.ajaxurl,
                 type: 'POST',
                 data: formData,
                 success: (response) => {
+                    console.log('Response:', response);
                     if (response.success) {
                         this.showMessage(response.data.message, 'success');
                         
                         // Jeśli to nowy kalendarz, przekieruj do edycji
                         if (!calendarId && response.data.id) {
-                            window.location.href = 'admin.php?page=advent-calendar-new&calendar_id=' + response.data.id;
+                            setTimeout(() => {
+                                window.location.href = 'admin.php?page=advent-calendar-new&calendar_id=' + response.data.id;
+                            }, 1000);
                         }
                     } else {
-                        this.showMessage(response.data, 'error');
+                        this.showMessage(response.data || 'Wystąpił błąd podczas zapisywania', 'error');
                     }
                 },
-                error: () => {
+                error: (xhr, status, error) => {
+                    console.error('AJAX Error:', error);
                     this.showMessage('Błąd połączenia. Spróbuj ponownie.', 'error');
                 },
                 complete: () => {
                     button.prop('disabled', false).removeClass('loading');
-                    button.html(adventCalendarAdmin.translations.saved);
-                    
-                    setTimeout(() => {
-                        button.html('Zapisz Kalendarz');
-                    }, 2000);
+                    button.html('Zapisz Kalendarz');
                 }
             });
         },
@@ -107,7 +116,7 @@ jQuery(document).ready(function($) {
         deleteCalendar: function(e) {
             e.preventDefault();
             
-            if (!confirm(adventCalendarAdmin.translations.deleteConfirm)) {
+            if (!confirm('Czy na pewno chcesz usunąć ten kalendarz? Ta operacja jest nieodwracalna.')) {
                 return;
             }
             
@@ -144,47 +153,57 @@ jQuery(document).ready(function($) {
             $('.door-editor-item').removeClass('active');
             doorItem.addClass('active');
             
+            $('#door-form').show();
+            $('#door-number-display').text(doorNumber);
+            
             // Sprawdź czy drzwi już istnieją
-            $.ajax({
-                url: adventCalendarAdmin.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'get_door',
-                    nonce: adventCalendarAdmin.nonce,
-                    door_id: doorItem.data('door-id') || 0,
-                    door_number: doorNumber,
-                    calendar_id: calendarId
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.populateDoorForm(response.data);
-                    } else {
+            const doorId = doorItem.data('door-id');
+            if (doorId) {
+                // Ładuj istniejące drzwi
+                $.ajax({
+                    url: adventCalendarAdmin.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'get_door',
+                        nonce: adventCalendarAdmin.nonce,
+                        door_id: doorId
+                    },
+                    success: (response) => {
+                        if (response.success) {
+                            this.populateDoorForm(response.data);
+                        } else {
+                            this.resetDoorForm(doorNumber);
+                        }
+                    },
+                    error: () => {
                         this.resetDoorForm(doorNumber);
                     }
-                },
-                error: () => {
-                    this.resetDoorForm(doorNumber);
-                }
-            });
+                });
+            } else {
+                // Nowe drzwi
+                this.resetDoorForm(doorNumber);
+            }
         },
         
         populateDoorForm: function(doorData) {
+            console.log('Populating door form:', doorData);
             $('#door-id').val(doorData.id);
             $('#door-number').val(doorData.door_number);
-            $('#door-title').val(doorData.title);
-            $('#door-content').val(doorData.content);
-            $('#door-image').val(doorData.image_url);
-            $('#door-link').val(doorData.link_url);
-            $('input[name="door_type"][value="' + doorData.door_type + '"]').prop('checked', true);
-            $('#door-animation').val(doorData.animation);
-            $('#door-custom-css').val(doorData.custom_css);
-            $('#door-unlock-date').val(doorData.unlock_date);
+            $('#door-title').val(doorData.title || '');
+            $('#door-content').val(doorData.content || '');
+            $('#door-image').val(doorData.image_url || '');
+            $('#door-link').val(doorData.link_url || '');
+            $('input[name="door_type"][value="' + (doorData.door_type || 'modal') + '"]').prop('checked', true);
+            $('#door-animation').val(doorData.animation || 'fade');
+            $('#door-custom-css').val(doorData.custom_css || '');
+            $('#door-unlock-date').val(doorData.unlock_date || '');
             
             this.toggleDoorType();
-            this.updateImagePreview(doorData.image_url);
+            this.updateImagePreview(doorData.image_url || '');
         },
         
         resetDoorForm: function(doorNumber) {
+            console.log('Resetting door form for number:', doorNumber);
             $('#door-id').val('');
             $('#door-number').val(doorNumber);
             $('#door-title').val('');
@@ -192,14 +211,20 @@ jQuery(document).ready(function($) {
             $('#door-image').val('');
             $('#door-link').val('');
             $('input[name="door_type"][value="modal"]').prop('checked', true);
-            $('#door-animation').val($('#calendar-default-animation').val());
+            $('#door-animation').val($('#calendar-default-animation').val() || 'fade');
             $('#door-custom-css').val('');
             
+            // Ustaw datę odblokowania na podstawie daty startowej
             const startDate = $('#calendar-start-date').val();
             if (startDate) {
                 const unlockDate = new Date(startDate);
                 unlockDate.setDate(unlockDate.getDate() + (doorNumber - 1));
                 $('#door-unlock-date').val(unlockDate.toISOString().split('T')[0]);
+            } else {
+                const defaultDate = new Date();
+                defaultDate.setMonth(11); // Grudzień
+                defaultDate.setDate(doorNumber);
+                $('#door-unlock-date').val(defaultDate.toISOString().split('T')[0]);
             }
             
             this.toggleDoorType();
@@ -208,8 +233,9 @@ jQuery(document).ready(function($) {
         
         saveDoor: function(e) {
             e.preventDefault();
+            console.log('Saving door...');
             
-            const button = $(e.target);
+            const button = $('#save-door');
             const formData = {
                 action: 'save_door',
                 nonce: adventCalendarAdmin.nonce,
@@ -226,35 +252,47 @@ jQuery(document).ready(function($) {
                 unlock_date: $('#door-unlock-date').val()
             };
             
+            console.log('Door data:', formData);
+            
             button.prop('disabled', true).addClass('loading');
+            button.html('<span class="spinner"></span> Zapisywanie...');
             
             $.ajax({
                 url: adventCalendarAdmin.ajaxurl,
                 type: 'POST',
                 data: formData,
                 success: (response) => {
+                    console.log('Door save response:', response);
                     if (response.success) {
                         this.showMessage(response.data.message, 'success');
                         
                         // Zaktualizuj ID drzwi w edytorze
                         if (response.data.id) {
                             $('.door-editor-item.active').data('door-id', response.data.id);
+                            $('.door-editor-item.active').addClass('has-content');
                         }
                     } else {
-                        this.showMessage(response.data, 'error');
+                        this.showMessage(response.data || 'Wystąpił błąd podczas zapisywania drzwi', 'error');
                     }
                 },
-                error: () => {
+                error: (xhr, status, error) => {
+                    console.error('AJAX Error:', error);
                     this.showMessage('Błąd połączenia. Spróbuj ponownie.', 'error');
                 },
                 complete: () => {
                     button.prop('disabled', false).removeClass('loading');
+                    button.html('Zapisz Drzwi');
                 }
             });
         },
         
         uploadImage: function(e) {
             e.preventDefault();
+            
+            if (typeof wp === 'undefined' || typeof wp.media === 'undefined') {
+                alert('Funkcja uploadu obrazków nie jest dostępna. Upewnij się, że WordPress media jest załadowany.');
+                return;
+            }
             
             const frame = wp.media({
                 title: 'Wybierz obrazek drzwi',
@@ -277,9 +315,9 @@ jQuery(document).ready(function($) {
             const preview = $('#door-image-preview');
             
             if (imageUrl) {
-                preview.html('<img src="' + imageUrl + '" style="max-width: 200px; height: auto;">');
+                preview.html('<img src="' + imageUrl + '" style="max-width: 200px; height: auto; border-radius: 5px;">');
             } else {
-                preview.html('<p>Brak obrazka</p>');
+                preview.html('<p style="color: #666; font-style: italic;">Brak obrazka</p>');
             }
         },
         
@@ -296,10 +334,14 @@ jQuery(document).ready(function($) {
         },
         
         showMessage: function(message, type) {
-            const messageDiv = $('<div class="notice notice-' + type + ' is-dismissible"><p>' + message + '</p></div>');
+            // Usuń istniejące komunikaty
+            $('.advent-calendar-notice').remove();
+            
+            const messageDiv = $('<div class="advent-calendar-notice notice notice-' + type + ' is-dismissible"><p>' + message + '</p></div>');
             
             $('.advent-calendar-admin').prepend(messageDiv);
             
+            // Auto-ukrywanie po 5 sekundach
             setTimeout(() => {
                 messageDiv.fadeOut(() => messageDiv.remove());
             }, 5000);
@@ -308,8 +350,23 @@ jQuery(document).ready(function($) {
             messageDiv.on('click', '.notice-dismiss', function() {
                 messageDiv.remove();
             });
+            
+            // Ręczne ukrywanie po kliknięciu
+            messageDiv.on('click', function() {
+                $(this).remove();
+            });
         }
     };
+    
+    // Sprawdź czy zmienna adventCalendarAdmin jest dostępna
+    if (typeof adventCalendarAdmin === 'undefined') {
+        console.error('adventCalendarAdmin variable is not defined');
+        // Utwórz fallback
+        window.adventCalendarAdmin = {
+            ajaxurl: '/wp-admin/admin-ajax.php',
+            nonce: 'fallback_nonce'
+        };
+    }
     
     AdventCalendarAdmin.init();
 });

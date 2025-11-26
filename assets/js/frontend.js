@@ -19,49 +19,67 @@ jQuery(document).ready(function($) {
         },
         
         openDoor: function(e) {
-            e.preventDefault();
-            const door = $(e.currentTarget);
-            
-            if (door.hasClass('loading') || door.hasClass('open')) {
-                return;
-            }
-            
-            door.addClass('loading');
-            
-            const doorId = door.data('door-id');
-            const calendarId = door.data('calendar-id');
-
-            let userSession = localStorage.getItem('advent_calendar_session');
-            if (!userSession) {
-                userSession = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('advent_calendar_session', userSession);
-            }
-            
-            $.ajax({
-                url: adventCalendar.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'open_door',
-                    door_id: doorId,
-                    calendar_id: calendarId,
-                    user_session: userSession, // DODAJ TĘ LINIĘ
-                    nonce: adventCalendar.nonce
-                },
-                success: (response) => {
-                    door.removeClass('loading');
-                    
-                    if (response.success) {
-                        this.handleDoorOpenSuccess(door, response.data);
-                    } else {
-                        this.handleDoorOpenError(door, response.data);
-                    }
-                },
-                error: () => {
-                    door.removeClass('loading');
-                    this.showError('Błąd połączenia. Spróbuj ponownie.');
-                }
-            });
+    e.preventDefault();
+    const door = $(e.currentTarget);
+    
+    if (door.hasClass('loading') || door.hasClass('open')) {
+        return;
+    }
+    
+    door.addClass('loading');
+    
+    const doorId = door.data('door-id');
+    const calendarId = door.data('calendar-id');
+    
+    // Pobierz user_session z localStorage LUB utwórz nowy
+    let userSession = localStorage.getItem('advent_calendar_session');
+    if (!userSession) {
+        userSession = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('advent_calendar_session', userSession);
+        
+        // Zapisz też w cookie dla PHP
+        document.cookie = "advent_calendar_user_session=" + userSession + "; max-age=" + (365*24*60*60) + "; path=/";
+    }
+    
+    $.ajax({
+        url: adventCalendar.ajaxurl,
+        type: 'POST',
+        data: {
+            action: 'open_door',
+            door_id: doorId,
+            calendar_id: calendarId,
+            user_session: userSession,
+            nonce: adventCalendar.nonce
         },
+        success: (response) => {
+            door.removeClass('loading');
+            
+            if (response.success) {
+                this.handleDoorOpenSuccess(door, response.data);
+                // Oznacz drzwi jako otwarte w localStorage
+                this.markDoorAsOpened(doorId, userSession);
+            } else {
+                this.handleDoorOpenError(door, response.data);
+            }
+        },
+        error: () => {
+            door.removeClass('loading');
+            this.showError('Błąd połączenia. Spróbuj ponownie.');
+        }
+    });
+},
+
+// Dodaj nową funkcję
+markDoorAsOpened: function(doorId, userSession) {
+    let openedDoors = JSON.parse(localStorage.getItem('advent_opened_doors') || '{}');
+    if (!openedDoors[userSession]) {
+        openedDoors[userSession] = [];
+    }
+    if (!openedDoors[userSession].includes(doorId)) {
+        openedDoors[userSession].push(doorId);
+        localStorage.setItem('advent_opened_doors', JSON.stringify(openedDoors));
+    }
+},
         
         handleDoorOpenSuccess: function(door, data) {
             door.addClass('open door-animation-' + data.animation);

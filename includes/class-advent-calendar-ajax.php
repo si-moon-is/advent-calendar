@@ -1,5 +1,4 @@
 <?php
-
 class Advent_Calendar_Ajax {
     
     public function __construct() {
@@ -26,15 +25,12 @@ class Advent_Calendar_Ajax {
         
         $settings = json_decode($calendar->settings, true);
         
-        // Sprawdź czy drzwi można otworzyć
         if (!Advent_Calendar::can_unlock_door($door->door_number, $settings)) {
             wp_send_json_error('Te drzwi nie są jeszcze dostępne');
         }
         
-        // Zapisz otwarcie
         Advent_Calendar::log_door_open($door_id, $calendar_id);
         
-        // Efekty specjalne
         $effects = array();
         if ($settings['snow_effect'] ?? false) {
             $effects[] = 'snow';

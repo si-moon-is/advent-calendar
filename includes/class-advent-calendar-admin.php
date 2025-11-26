@@ -8,6 +8,7 @@ class Advent_Calendar_Admin {
         add_action('wp_ajax_advent_calendar_delete', array($this, 'ajax_delete_calendar'));
         add_action('wp_ajax_advent_calendar_save_door', array($this, 'ajax_save_door'));
         add_action('wp_ajax_advent_calendar_get_door', array($this, 'ajax_get_door'));
+        add_action('wp_ajax_get_calendar_stats', array($this, 'get_calendar_stats_ajax'));
     }
     
     public function add_admin_menu() {
@@ -38,6 +39,24 @@ class Advent_Calendar_Admin {
             'advent-calendar-new',
             array($this, 'editor_page')
         );
+        
+        add_submenu_page(
+            'advent-calendar',
+            'Statystyki',
+            'Statystyki',
+            'manage_options',
+            'advent-calendar-stats',
+            array($this, 'statistics_page')
+        );
+        
+        add_submenu_page(
+            'advent-calendar',
+            'Eksport/Import',
+            'Eksport/Import',
+            'manage_options',
+            'advent-calendar-export',
+            array($this, 'export_import_page')
+        );
     }
     
     public function enqueue_scripts($hook) {
@@ -51,6 +70,11 @@ class Advent_Calendar_Admin {
         wp_enqueue_script('advent-calendar-admin', ADVENT_CALENDAR_PLUGIN_URL . 'assets/js/admin.js', array('jquery', 'wp-color-picker'), ADVENT_CALENDAR_VERSION, true);
         wp_enqueue_media();
         
+        // Dodaj Chart.js tylko na stronie statystyk
+        if ($hook === 'advent-calendar_page_advent-calendar-stats') {
+            wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js', array(), '3.9.1', true);
+        }
+        
         wp_localize_script('advent-calendar-admin', 'adventCalendar', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('advent_calendar_nonce')
@@ -63,6 +87,14 @@ class Advent_Calendar_Admin {
     
     public function editor_page() {
         include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/door-editor.php';
+    }
+    
+    public function statistics_page() {
+        include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/statistics.php';
+    }
+    
+    public function export_import_page() {
+        include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/export-import.php';
     }
     
     public function ajax_save_calendar() {
@@ -167,6 +199,60 @@ class Advent_Calendar_Admin {
         } else {
             wp_send_json_error('Drzwi nie znalezione');
         }
+    }
+    
+    public function get_calendar_stats_ajax() {
+        check_ajax_referer('advent_calendar_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Brak uprawnień');
+        }
+        
+        $calendar_id = intval($_POST['calendar_id']);
+        $stats = $this->get_calendar_statistics($calendar_id);
+        
+        wp_send_json_success($stats);
+    }
+    
+    private function get_calendar_statistics($calendar_id) {
+        global $wpdb;
+        
+        $total_opens = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats WHERE calendar_id = %d",
+            $calendar_id
+        ));
+        
+        $unique_visitors = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(DISTINCT user_ip) FROM {$wpdb->prefix}advent_calendar_stats WHERE calendar_id = %d",
+            $calendar_id
+        ));
+        
+        $popular_doors = $wpdb->get_results($wpdb->prepare(
+            "SELECT d.door_number, d.title, COUNT(s.id) as open_count 
+             FROM {$wpdb->prefix}advent_calendar_stats s 
+             JOIN {$wpdb->prefix}advent_calendar_doors d ON s.door_id = d.id 
+             WHERE s.calendar_id = %d 
+             GROUP BY s.door_id 
+             ORDER BY open_count DESC 
+             LIMIT 5",
+            $calendar_id
+        ));
+        
+        $daily_opens = $wpdb->get_results($wpdb->prepare(
+            "SELECT DATE(opened_at) as date, COUNT(*) as count 
+             FROM {$wpdb->prefix}advent_calendar_stats 
+             WHERE calendar_id = %d 
+             GROUP BY DATE(opened_at) 
+             ORDER BY date",
+            $calendar_id
+        ));
+        
+        return array(
+            'total_opens' => $total_opens ?: 0,
+            'unique_visitors' => $unique_visitors ?: 0,
+            'popular_doors' => $popular_doors ?: array(),
+            'daily_opens' => $daily_opens ?: array()
+        );
     }
 }
 ?>

@@ -77,82 +77,100 @@ class Advent_Calendar {
     
     public static function get_calendars() {
         global $wpdb;
-        return $wpdb->get_results("SELECT * FROM {$wpdb->prefix}advent_calendars ORDER BY created_at DESC");
+        $table = $wpdb->prefix . 'advent_calendars';
+        return $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC");
     }
     
     public static function get_calendar($id) {
         global $wpdb;
-        return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}advent_calendars WHERE id = %d", $id
-        ));
+        $table = $wpdb->prefix . 'advent_calendars';
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id));
     }
     
     public static function get_calendar_doors($calendar_id) {
         global $wpdb;
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}advent_calendar_doors WHERE calendar_id = %d ORDER BY door_number", $calendar_id
-        ));
+        $table = $wpdb->prefix . 'advent_calendar_doors';
+        return $wpdb->get_results($wpdb->prepare("SELECT * FROM $table WHERE calendar_id = %d ORDER BY door_number", $calendar_id));
     }
     
     public static function get_door($door_id) {
         global $wpdb;
-        return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}advent_calendar_doors WHERE id = %d", $door_id
-        ));
+        $table = $wpdb->prefix . 'advent_calendar_doors';
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $door_id));
     }
     
     public static function save_calendar($data) {
         global $wpdb;
         
-        $defaults = array(
-            'title' => 'Nowy Kalendarz',
-            'settings' => array(),
-            'created_at' => current_time('mysql')
+        error_log('ADVENT CALENDAR: Starting save_calendar with data: ' . print_r($data, true));
+        
+        $table = $wpdb->prefix . 'advent_calendars';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'") == $table;
+        if (!$table_exists) {
+            error_log('ADVENT CALENDAR ERROR: Table does not exist: ' . $table);
+            return false;
+        }
+        
+        // Validate required fields
+        if (empty($data['title'])) {
+            error_log('ADVENT CALENDAR ERROR: Title is empty');
+            return false;
+        }
+        
+        // Prepare settings
+        $settings = isset($data['settings']) ? $data['settings'] : array();
+        $settings_json = json_encode($settings);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('ADVENT CALENDAR ERROR: JSON encode failed: ' . json_last_error_msg());
+            return false;
+        }
+        
+        // Prepare data for database
+        $db_data = array(
+            'title' => sanitize_text_field($data['title']),
+            'settings' => $settings_json,
+            'updated_at' => current_time('mysql')
         );
         
-        $data = wp_parse_args($data, $defaults);
-        
-        if (empty($data['title'])) {
-            return false;
-        }
-        
-        $settings_json = json_encode($data['settings']);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return false;
-        }
+        $format = array('%s', '%s', '%s');
         
         if (isset($data['id']) && !empty($data['id'])) {
-            // Aktualizacja istniejącego kalendarza
-            $result = $wpdb->update(
-                $wpdb->prefix . 'advent_calendars',
-                array(
-                    'title' => $data['title'],
-                    'settings' => $settings_json,
-                    'updated_at' => current_time('mysql')
-                ),
-                array('id' => $data['id']),
-                array('%s', '%s', '%s'),
-                array('%d')
-            );
+            // UPDATE existing calendar
+            $calendar_id = intval($data['id']);
+            error_log('ADVENT CALENDAR: Updating calendar ID: ' . $calendar_id);
+            
+            $where = array('id' => $calendar_id);
+            $where_format = array('%d');
+            
+            $result = $wpdb->update($table, $db_data, $where, $format, $where_format);
+            
+            error_log('ADVENT CALENDAR: Update result: ' . var_export($result, true));
+            error_log('ADVENT CALENDAR: Last error: ' . $wpdb->last_error);
+            error_log('ADVENT CALENDAR: Last query: ' . $wpdb->last_query);
             
             if ($result === false) {
+                error_log('ADVENT CALENDAR ERROR: Update failed completely');
                 return false;
             }
             
-            return $data['id'];
+            return $calendar_id;
         } else {
-            // Tworzenie nowego kalendarza
-            $result = $wpdb->insert(
-                $wpdb->prefix . 'advent_calendars',
-                array(
-                    'title' => $data['title'],
-                    'settings' => $settings_json,
-                    'created_at' => $data['created_at']
-                ),
-                array('%s', '%s', '%s')
-            );
+            // INSERT new calendar
+            error_log('ADVENT CALENDAR: Inserting new calendar');
+            $db_data['created_at'] = current_time('mysql');
+            $format[] = '%s';
+            
+            $result = $wpdb->insert($table, $db_data, $format);
+            
+            error_log('ADVENT CALENDAR: Insert result: ' . var_export($result, true));
+            error_log('ADVENT CALENDAR: Insert ID: ' . $wpdb->insert_id);
+            error_log('ADVENT CALENDAR: Last error: ' . $wpdb->last_error);
+            error_log('ADVENT CALENDAR: Last query: ' . $wpdb->last_query);
             
             if ($result === false) {
+                error_log('ADVENT CALENDAR ERROR: Insert failed');
                 return false;
             }
             
@@ -163,23 +181,9 @@ class Advent_Calendar {
     public static function save_door($data) {
         global $wpdb;
         
-        $defaults = array(
-            'calendar_id' => 0,
-            'door_number' => 1,
-            'title' => '',
-            'content' => '',
-            'image_url' => '',
-            'link_url' => '',
-            'door_type' => 'modal',
-            'animation' => 'fade',
-            'styles' => array(),
-            'custom_css' => '',
-            'unlock_date' => date('Y-m-d'),
-            'is_open' => 0
-        );
+        $table = $wpdb->prefix . 'advent_calendar_doors';
         
-        $data = wp_parse_args($data, $defaults);
-        
+        // Validate required fields
         if (empty($data['calendar_id']) || empty($data['door_number'])) {
             return false;
         }
@@ -187,22 +191,22 @@ class Advent_Calendar {
         $door_data = array(
             'calendar_id' => intval($data['calendar_id']),
             'door_number' => intval($data['door_number']),
-            'title' => sanitize_text_field($data['title']),
-            'content' => wp_kses_post($data['content']),
-            'image_url' => esc_url_raw($data['image_url']),
-            'link_url' => esc_url_raw($data['link_url']),
-            'door_type' => sanitize_text_field($data['door_type']),
-            'animation' => sanitize_text_field($data['animation']),
-            'styles' => json_encode($data['styles']),
-            'custom_css' => sanitize_textarea_field($data['custom_css']),
-            'unlock_date' => sanitize_text_field($data['unlock_date'])
+            'title' => sanitize_text_field($data['title'] ?? ''),
+            'content' => wp_kses_post($data['content'] ?? ''),
+            'image_url' => esc_url_raw($data['image_url'] ?? ''),
+            'link_url' => esc_url_raw($data['link_url'] ?? ''),
+            'door_type' => sanitize_text_field($data['door_type'] ?? 'modal'),
+            'animation' => sanitize_text_field($data['animation'] ?? 'fade'),
+            'styles' => json_encode($data['styles'] ?? array()),
+            'custom_css' => sanitize_textarea_field($data['custom_css'] ?? ''),
+            'unlock_date' => sanitize_text_field($data['unlock_date'] ?? date('Y-m-d'))
         );
         
         $format = array('%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');
         
         if (isset($data['id']) && !empty($data['id'])) {
             $result = $wpdb->update(
-                $wpdb->prefix . 'advent_calendar_doors',
+                $table,
                 $door_data,
                 array('id' => $data['id']),
                 $format,
@@ -211,12 +215,7 @@ class Advent_Calendar {
             
             return $result !== false ? $data['id'] : false;
         } else {
-            $result = $wpdb->insert(
-                $wpdb->prefix . 'advent_calendar_doors',
-                $door_data,
-                $format
-            );
-            
+            $result = $wpdb->insert($table, $door_data, $format);
             return $result ? $wpdb->insert_id : false;
         }
     }
@@ -233,6 +232,7 @@ class Advent_Calendar {
     public static function log_door_open($door_id, $calendar_id) {
         global $wpdb;
         
+        // Update door open count
         $wpdb->query($wpdb->prepare(
             "UPDATE {$wpdb->prefix}advent_calendar_doors 
              SET open_count = open_count + 1, is_open = 1 
@@ -240,6 +240,7 @@ class Advent_Calendar {
             $door_id
         ));
         
+        // Log the opening
         $result = $wpdb->insert(
             $wpdb->prefix . 'advent_calendar_stats',
             array(
@@ -269,42 +270,24 @@ class Advent_Calendar {
         global $wpdb;
         
         $result = $wpdb->delete($wpdb->prefix . 'advent_calendars', array('id' => $id), array('%d'));
-        $wpdb->delete($wpdb->prefix . 'advent_calendar_doors', array('calendar_id' => $id), array('%d'));
-        $wpdb->delete($wpdb->prefix . 'advent_calendar_stats', array('calendar_id' => $id), array('%d'));
-        $wpdb->delete($wpdb->prefix . 'advent_calendar_styles', array('calendar_id' => $id), array('%d'));
+        
+        if ($result !== false) {
+            // Delete related data
+            $wpdb->delete($wpdb->prefix . 'advent_calendar_doors', array('calendar_id' => $id), array('%d'));
+            $wpdb->delete($wpdb->prefix . 'advent_calendar_stats', array('calendar_id' => $id), array('%d'));
+            $wpdb->delete($wpdb->prefix . 'advent_calendar_styles', array('calendar_id' => $id), array('%d'));
+        }
         
         return $result !== false;
     }
     
     public static function get_door_by_calendar_and_number($calendar_id, $door_number) {
         global $wpdb;
+        $table = $wpdb->prefix . 'advent_calendar_doors';
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}advent_calendar_doors 
-             WHERE calendar_id = %d AND door_number = %d",
+            "SELECT * FROM $table WHERE calendar_id = %d AND door_number = %d",
             $calendar_id, $door_number
         ));
-    }
-    
-    public static function update_calendar_settings($calendar_id, $settings) {
-        global $wpdb;
-        
-        $settings_json = json_encode($settings);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return false;
-        }
-        
-        $result = $wpdb->update(
-            $wpdb->prefix . 'advent_calendars',
-            array(
-                'settings' => $settings_json,
-                'updated_at' => current_time('mysql')
-            ),
-            array('id' => $calendar_id),
-            array('%s', '%s'),
-            array('%d')
-        );
-        
-        return $result !== false;
     }
 }
 ?>

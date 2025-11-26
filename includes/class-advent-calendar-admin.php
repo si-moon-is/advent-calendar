@@ -84,6 +84,10 @@ class Advent_Calendar_Admin {
     }
     
     public function ajax_save_calendar() {
+        // TYMCZASOWE DEBUGOWANIE - DODAJ TE 3 LINIJKI
+        error_log('=== ADVENT CALENDAR DEBUG ===');
+        error_log('POST data: ' . print_r($_POST, true));
+        error_log('Calendar ID from POST: ' . ($_POST['id'] ?? 'NOT SET'));
         // Sprawdź nonce
         if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce')) {
             wp_send_json_error('Błąd bezpieczeństwa (nonce)');

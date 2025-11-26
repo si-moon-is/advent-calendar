@@ -64,7 +64,7 @@ jQuery(document).ready(function($) {
 
             const calendarId = $('#calendar-id').val();
             if (calendarId) {
-                formData.id = parseInt(calendarId);
+                formData.id = calendarId;
             }
 
             button.prop('disabled', true).addClass('loading');
@@ -79,22 +79,30 @@ jQuery(document).ready(function($) {
                         this.showMessage(response.data.message, 'success');
                         
                         if (response.data.redirect) {
+                            // Nowy kalendarz - przekieruj do edycji
                             setTimeout(() => {
                                 window.location.href = response.data.redirect;
                             }, 1000);
                         } else {
+                            // Aktualizacja istniejącego kalendarza
                             $('#calendar-id').val(response.data.id);
+                            button.html('Zaktualizowano!');
+                            setTimeout(() => {
+                                button.html('Zaktualizuj Kalendarz');
+                            }, 2000);
                         }
                     } else {
                         this.showMessage(response.data || 'Wystąpił nieznany błąd', 'error');
                     }
                 },
                 error: (xhr, status, error) => {
+                    console.error('AJAX Error:', error);
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
                     this.showMessage('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
                 },
                 complete: () => {
                     button.prop('disabled', false).removeClass('loading');
-                    button.html(calendarId ? 'Zaktualizuj Kalendarz' : 'Utwórz Kalendarz');
                 }
             });
         },
@@ -102,7 +110,7 @@ jQuery(document).ready(function($) {
         deleteCalendar: function(e) {
             e.preventDefault();
             
-            if (!confirm('Czy na pewno chcesz usunąć ten kalendarz?')) {
+            if (!confirm('Czy na pewno chcesz usunąć ten kalendarz? Ta operacja jest nieodwracalna.')) {
                 return;
             }
 
@@ -244,7 +252,6 @@ jQuery(document).ready(function($) {
             const formData = {
                 action: 'advent_calendar_save_door',
                 nonce: adventCalendar.nonce,
-                door_id: $('#door-id').val(),
                 calendar_id: calendarId,
                 door_number: doorNumber,
                 title: $('#door-title').val(),
@@ -256,6 +263,11 @@ jQuery(document).ready(function($) {
                 custom_css: $('#door-custom-css').val(),
                 unlock_date: $('#door-unlock-date').val()
             };
+
+            const doorId = $('#door-id').val();
+            if (doorId) {
+                formData.door_id = doorId;
+            }
 
             button.prop('disabled', true).addClass('loading');
             button.html('<span class="spinner"></span> Zapisywanie...');

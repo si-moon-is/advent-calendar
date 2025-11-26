@@ -75,7 +75,7 @@ $theme = $atts['theme'] ?? $settings['theme'] ?? 'christmas';
     border: 3px solid #fd79a8;
 }
 
-.advent-calendar.door {
+.advent-calendar-door {
     position: relative;
     aspect-ratio: 1;
     border-radius: 10px;
@@ -92,28 +92,28 @@ $theme = $atts['theme'] ?? $settings['theme'] ?? 'christmas';
     background: rgba(255,255,255,0.2);
 }
 
-.advent-calendar.door.available {
+.advent-calendar-door.available {
     background: #c41e3a;
     cursor: pointer;
 }
 
-.advent-calendar.door.available:hover {
+.advent-calendar-door.available:hover {
     transform: translateY(-5px) scale(1.05);
     box-shadow: 0 12px 20px rgba(0,0,0,0.2);
 }
 
-.advent-calendar.door.locked {
+.advent-calendar-door.locked {
     background: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.advent-calendar.door.open {
+.advent-calendar-door.open {
     background: #28a745;
     cursor: default;
 }
 
-.advent-calendar.door .door-number {
+.advent-calendar-door .door-number {
     position: absolute;
     top: 8px;
     left: 8px;
@@ -127,13 +127,13 @@ $theme = $atts['theme'] ?? $settings['theme'] ?? 'christmas';
     justify-content: center;
 }
 
-.advent-calendar.door .door-content {
+.advent-calendar-door .door-content {
     padding: 10px;
     text-align: center;
     width: 100%;
 }
 
-.advent-calendar.door .door-content img {
+.advent-calendar-door .door-content img {
     max-width: 100%;
     height: auto;
     border-radius: 5px;
@@ -143,7 +143,6 @@ $theme = $atts['theme'] ?? $settings['theme'] ?? 'christmas';
     font-size: 2em;
 }
 
-/* Modal styles */
 .advent-modal {
     display: none;
     position: fixed;
@@ -214,14 +213,13 @@ $theme = $atts['theme'] ?? $settings['theme'] ?? 'christmas';
     color: #333;
 }
 
-/* Responsywność */
 @media (max-width: 768px) {
     .advent-calendar {
         gap: 10px;
         padding: 15px;
     }
     
-    .advent-calendar.door {
+    .advent-calendar-door {
         font-size: 1.2em;
     }
     

@@ -1,5 +1,4 @@
 <?php
-
 class Advent_Calendar_Admin {
     
     public function __construct() {
@@ -59,11 +58,11 @@ class Advent_Calendar_Admin {
     }
     
     public function main_page() {
-        include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/main-admin.php';
+        include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/calendar-admin.php';
     }
     
     public function editor_page() {
-        include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/calendar-editor.php';
+        include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/door-editor.php';
     }
     
     public function ajax_save_calendar() {

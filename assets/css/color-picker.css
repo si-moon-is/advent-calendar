@@ -1,6 +1,7 @@
-/* Style dla color picker */
 .wp-picker-container {
     position: relative;
+    display: inline-block;
+    vertical-align: top;
 }
 
 .wp-picker-container .wp-color-result-text {
@@ -9,4 +10,26 @@
 
 .wp-picker-container .wp-picker-clear {
     margin-left: 5px;
+    padding: 2px 8px;
+}
+
+.wp-picker-container .wp-picker-input-wrap {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.wp-picker-container .wp-picker-input-wrap.active {
+    display: block;
+}
+
+.wp-picker-container .color-picker {
+    width: 100px;
 }

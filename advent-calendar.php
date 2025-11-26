@@ -19,6 +19,15 @@ define('ADVENT_CALENDAR_VERSION', '2.0.0');
 define('ADVENT_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ADVENT_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
+// Najpierw ładujemy zależności
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-admin.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-frontend.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-ajax.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-export-import.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-statistics.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-styles.php';
+
 // Główna klasa wtyczki
 class Advent_Calendar_Plugin {
     
@@ -40,9 +49,6 @@ class Advent_Calendar_Plugin {
     public function init() {
         load_plugin_textdomain('advent-calendar', false, dirname(plugin_basename(__FILE__)) . '/languages');
         
-        // Załaduj klasy
-        $this->load_dependencies();
-        
         // Rejestracja hooków
         if (is_admin()) {
             new Advent_Calendar_Admin();
@@ -54,16 +60,9 @@ class Advent_Calendar_Plugin {
         new Advent_Calendar_Export_Import();
         new Advent_Calendar_Statistics();
         new Advent_Calendar_Styles();
-    }
-    
-    private function load_dependencies() {
-        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar.php';
-        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-admin.php';
-        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-frontend.php';
-        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-ajax.php';
-        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-export-import.php';
-        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-statistics.php';
-        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-styles.php';
+        
+        // Rejestracja shortcode
+        add_shortcode('advent_calendar', array($this, 'calendar_shortcode'));
     }
     
     public function activate() {
@@ -88,15 +87,13 @@ class Advent_Calendar_Plugin {
     public function deactivate() {
         flush_rewrite_rules();
     }
+    
+    public function calendar_shortcode($atts) {
+        $frontend = new Advent_Calendar_Frontend();
+        return $frontend->calendar_shortcode($atts);
+    }
 }
 
 // Inicjalizacja wtyczki
 Advent_Calendar_Plugin::get_instance();
-
-// Rejestracja shortcode
-function advent_calendar_shortcode($atts) {
-    $frontend = new Advent_Calendar_Frontend();
-    return $frontend->calendar_shortcode($atts);
-}
-add_shortcode('advent_calendar', 'advent_calendar_shortcode');
 ?>

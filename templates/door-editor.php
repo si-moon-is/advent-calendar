@@ -21,6 +21,11 @@ $settings = $calendar ? json_decode($calendar->settings, true) : array(
 
 $total_doors = ($settings['columns'] ?? 6) * ($settings['rows'] ?? 4);
 $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array();
+
+// Sprawdź czy formularz został wysłany
+if (isset($_POST['save_calendar']) && check_admin_referer('save_calendar_nonce')) {
+    $this->save_calendar_from_post();
+}
 ?>
 
 <div class="wrap advent-calendar-admin">
@@ -29,18 +34,20 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
     </h1>
     
     <div class="advent-tabs">
-        <button class="advent-tab active" data-tab="settings">Ustawienia</button>
-        <button class="advent-tab" data-tab="doors">Edytor Drzwi</button>
-        <button class="advent-tab" data-tab="styles">Style</button>
+        <button type="button" class="advent-tab active" data-tab="settings">Ustawienia</button>
+        <button type="button" class="advent-tab" data-tab="doors">Edytor Drzwi</button>
+        <button type="button" class="advent-tab" data-tab="styles">Style</button>
     </div>
     
     <!-- Tab: Ustawienia -->
     <div id="settings" class="tab-content active">
         <form id="calendar-form" method="post">
+            <?php wp_nonce_field('save_calendar_nonce'); ?>
+            <input type="hidden" name="save_calendar" value="1">
             <input type="hidden" id="calendar-id" name="calendar_id" value="<?php echo $calendar_id; ?>">
             
             <div class="form-group">
-                <label for="calendar-title">Nazwa Kalendarza</label>
+                <label for="calendar-title">Nazwa Kalendarza *</label>
                 <input type="text" id="calendar-title" class="form-control" name="title" 
                        value="<?php echo $calendar ? esc_attr($calendar->title) : ''; ?>" required>
             </div>
@@ -122,7 +129,11 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                 </label>
             </div>
             
-            <button type="submit" id="save-calendar" class="btn btn-primary">Zapisz Kalendarz</button>
+            <button type="button" id="save-calendar" class="btn btn-primary">Zapisz Kalendarz</button>
+            
+            <?php if ($calendar): ?>
+                <a href="<?php echo admin_url('admin.php?page=advent-calendar'); ?>" class="btn btn-secondary">Powrót do listy</a>
+            <?php endif; ?>
         </form>
     </div>
     
@@ -151,7 +162,7 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                 <?php endfor; ?>
             </div>
             
-            <div id="door-form" style="display: none;">
+            <div id="door-form" style="display: none; margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 5px;">
                 <h3>Edytuj Drzwi <span id="door-number-display"></span></h3>
                 <form id="door-editor-form">
                     <input type="hidden" id="door-id" name="door_id">
@@ -160,19 +171,21 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                     
                     <div class="form-group">
                         <label for="door-title">Tytuł</label>
-                        <input type="text" id="door-title" class="form-control" name="title">
+                        <input type="text" id="door-title" class="form-control" name="title" placeholder="Tytuł drzwi (opcjonalnie)">
                     </div>
                     
                     <div class="form-group">
                         <label for="door-image">Obrazek</label>
-                        <input type="text" id="door-image" class="form-control" name="image_url">
-                        <button type="button" id="upload-door-image" class="btn btn-secondary">Wybierz obrazek</button>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="door-image" class="form-control" name="image_url" placeholder="URL obrazka" style="flex: 1;">
+                            <button type="button" id="upload-door-image" class="btn btn-secondary">Wybierz obrazek</button>
+                        </div>
                         <div id="door-image-preview" style="margin-top: 10px;"></div>
                     </div>
                     
                     <div class="form-group">
                         <label>Typ zawartości</label>
-                        <div>
+                        <div style="display: flex; gap: 20px;">
                             <label>
                                 <input type="radio" name="door_type" value="modal" checked> Modal
                             </label>
@@ -187,12 +200,13 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                     
                     <div class="form-group" id="door-link-field" style="display: none;">
                         <label for="door-link">URL Linku</label>
-                        <input type="url" id="door-link" class="form-control" name="link_url">
+                        <input type="url" id="door-link" class="form-control" name="link_url" placeholder="https://...">
                     </div>
                     
                     <div class="form-group" id="door-content-field">
                         <label for="door-content">Zawartość</label>
-                        <textarea id="door-content" class="form-control" name="content" rows="10"></textarea>
+                        <textarea id="door-content" class="form-control" name="content" rows="10" placeholder="Treść, która pojawi się po otwarciu drzwi..."></textarea>
+                        <p class="description">Możesz używać HTML i shortcodów WordPress</p>
                     </div>
                     
                     <div class="form-group">
@@ -218,7 +232,10 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                                   placeholder="Dodatkowe style CSS dla tych drzwi"></textarea>
                     </div>
                     
-                    <button type="submit" id="save-door" class="btn btn-primary">Zapisz Drzwi</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="save-door" class="btn btn-primary">Zapisz Drzwi</button>
+                        <button type="button" id="cancel-door" class="btn btn-secondary" style="display: none;">Anuluj</button>
+                    </div>
                 </form>
             </div>
         <?php endif; ?>
@@ -266,3 +283,13 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+jQuery(document).ready(function($) {
+    // Zapobiegnij domyślnemu submitowi formularza
+    $('#calendar-form').on('submit', function(e) {
+        e.preventDefault();
+        return false;
+    });
+});
+</script>

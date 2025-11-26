@@ -282,6 +282,30 @@ class Advent_Calendar {
             return $_SERVER['REMOTE_ADDR'] ?? '';
         }
     }
+
+    private static function get_user_session() {
+        if (!session_id()) {
+            session_start();
+        }
+        
+        // Użyj session_id + user agent dla lepszej unikalności
+        $session_key = session_id() . '_' . ($_SERVER['HTTP_USER_AGENT'] ?? '');
+        return md5($session_key);
+    }
+    
+    public static function has_user_opened_door($door_id) {
+        global $wpdb;
+        
+        $user_session = self::get_user_session();
+        
+        $opened = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
+             WHERE door_id = %d AND user_session = %s",
+            $door_id, $user_session
+        ));
+        
+        return $opened > 0;
+    }
     
     public static function delete_calendar($id) {
         global $wpdb;

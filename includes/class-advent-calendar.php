@@ -41,17 +41,19 @@ class Advent_Calendar {
         ) $charset_collate;";
         
         $sql3 = "CREATE TABLE $stats_table (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            calendar_id mediumint(9) NOT NULL,
-            door_id mediumint(9) NOT NULL,
-            user_ip varchar(45),
-            user_agent text,
-            opened_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY calendar_id (calendar_id),
-            KEY door_id (door_id),
-            KEY opened_at (opened_at)
-        ) $charset_collate;";
+    id mediumint(9) NOT NULL AUTO_INCREMENT,
+    calendar_id mediumint(9) NOT NULL,
+    door_id mediumint(9) NOT NULL,
+    user_ip varchar(45),
+    user_agent text,
+    user_session varchar(64) NOT NULL,  // DODAJ TĘ KOLUMNĘ
+    opened_at datetime DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY calendar_id (calendar_id),
+    KEY door_id (door_id),
+    KEY user_session (user_session),    // DODAJ INDEKS
+    KEY opened_at (opened_at)
+) $charset_collate;";
         
         $sql4 = "CREATE TABLE $styles_table (
             id mediumint(9) NOT NULL AUTO_INCREMENT,

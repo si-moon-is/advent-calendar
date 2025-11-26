@@ -274,4 +274,69 @@ jQuery(document).ready(function($) {
             });
         },
 
-        cancelDoor
+                cancelDoorEdit: function() {
+            $('#door-form').hide();
+            $('.door-editor-item').removeClass('active');
+            this.resetDoorForm(1);
+        },
+
+        uploadImage: function(e) {
+            e.preventDefault();
+
+            const frame = wp.media({
+                title: 'Wybierz obraz drzwi',
+                multiple: false,
+                library: {
+                    type: 'image'
+                }
+            });
+
+            frame.on('select', () => {
+                const attachment = frame.state().get('selection').first().toJSON();
+                $('#door-image').val(attachment.url);
+                this.updateImagePreview(attachment.url);
+            });
+
+            frame.open();
+        },
+
+        updateImagePreview: function(imageUrl) {
+            const preview = $('#door-image-preview');
+            if (imageUrl) {
+                preview.html('<img src="' + imageUrl + '" alt="Podgląd">').show();
+            } else {
+                preview.hide();
+            }
+        },
+
+        toggleDoorType: function() {
+            const doorType = $('input[name="door_type"]:checked').val();
+            
+            if (doorType === 'modal') {
+                $('.door-link-field').hide();
+                $('.door-content-field').show();
+            } else if (doorType === 'link') {
+                $('.door-content-field').hide();
+                $('.door-link-field').show();
+            }
+        },
+
+        showMessage: function(message, type) {
+            const messageClass = type === 'success' ? 'notice-success' : 'notice-error';
+            const notice = $('<div class="notice ' + messageClass + ' is-dismissible"><p>' + message + '</p></div>');
+            
+            $('.wrap').prepend(notice);
+            
+            setTimeout(() => {
+                notice.fadeOut(() => notice.remove());
+            }, 5000);
+            
+            notice.on('click', '.notice-dismiss', () => {
+                notice.remove();
+            });
+        }
+    };
+
+    // Initialize
+    AdventCalendarAdmin.init();
+});

@@ -1,0 +1,12 @@
+/* Style dla color picker */
+.wp-picker-container {
+    position: relative;
+}
+
+.wp-picker-container .wp-color-result-text {
+    display: none;
+}
+
+.wp-picker-container .wp-picker-clear {
+    margin-left: 5px;
+}

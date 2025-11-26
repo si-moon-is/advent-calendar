@@ -37,12 +37,13 @@ jQuery(document).ready(function($) {
 
         saveCalendar: function(e) {
             e.preventDefault();
-            console.log('Saving calendar...');
+            console.log('Advent Calendar: Save button clicked');
 
             const button = $('#save-calendar');
             const title = $('#calendar-title').val().trim();
 
             if (!title) {
+                console.log('Advent Calendar: Validation failed - empty title');
                 this.showMessage('Nazwa kalendarza jest wymagana!', 'error');
                 $('#calendar-title').focus();
                 return;
@@ -68,7 +69,7 @@ jQuery(document).ready(function($) {
                 formData.id = parseInt(calendarId);
             }
 
-            console.log('Sending data:', formData);
+            console.log('Advent Calendar: Sending AJAX data:', formData);
 
             button.prop('disabled', true).addClass('loading');
             button.html('<span class="spinner"></span> Zapisywanie...');
@@ -78,9 +79,10 @@ jQuery(document).ready(function($) {
                 type: 'POST',
                 data: formData,
                 success: (response) => {
-                    console.log('Response received:', response);
+                    console.log('Advent Calendar: AJAX response received:', response);
                     
                     if (response.success) {
+                        console.log('Advent Calendar: Save successful');
                         this.showMessage(response.data.message, 'success');
                         
                         if (response.data.redirect) {
@@ -91,11 +93,14 @@ jQuery(document).ready(function($) {
                             $('#calendar-id').val(response.data.id);
                         }
                     } else {
+                        console.log('Advent Calendar: Save failed with error:', response.data);
                         this.showMessage(response.data || 'Wystąpił nieznany błąd', 'error');
                     }
                 },
                 error: (xhr, status, error) => {
-                    console.error('AJAX Error:', error);
+                    console.error('Advent Calendar: AJAX Error:', error);
+                    console.error('Advent Calendar: Status:', status);
+                    console.error('Advent Calendar: XHR response:', xhr.responseText);
                     this.showMessage('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
                 },
                 complete: () => {
@@ -269,65 +274,4 @@ jQuery(document).ready(function($) {
             });
         },
 
-        cancelDoorEdit: function() {
-            $('#door-form').hide();
-            $('.door-editor-item').removeClass('active');
-        },
-
-        uploadImage: function(e) {
-            e.preventDefault();
-
-            const frame = wp.media({
-                title: 'Wybierz obrazek',
-                multiple: false,
-                library: {
-                    type: 'image'
-                }
-            });
-
-            frame.on('select', () => {
-                const attachment = frame.state().get('selection').first().toJSON();
-                $('#door-image').val(attachment.url);
-                this.updateImagePreview(attachment.url);
-            });
-
-            frame.open();
-        },
-
-        updateImagePreview: function(imageUrl) {
-            const preview = $('#door-image-preview');
-            if (imageUrl) {
-                preview.html('<img src="' + imageUrl + '" style="max-width: 200px; height: auto; border-radius: 5px;">');
-            } else {
-                preview.html('<p style="color: #666; font-style: italic;">Brak obrazka</p>');
-            }
-        },
-
-        toggleDoorType: function() {
-            const doorType = $('input[name="door_type"]:checked').val();
-            if (doorType === 'link') {
-                $('#door-link-field').show();
-                $('#door-content-field').hide();
-            } else {
-                $('#door-link-field').hide();
-                $('#door-content-field').show();
-            }
-        },
-
-        showMessage: function(message, type) {
-            const messageDiv = $('<div class="notice notice-' + type + ' is-dismissible"><p>' + message + '</p></div>');
-            
-            $('#advent-calendar-messages').html(messageDiv);
-            
-            setTimeout(() => {
-                messageDiv.fadeOut();
-            }, 5000);
-
-            messageDiv.on('click', '.notice-dismiss', function() {
-                messageDiv.remove();
-            });
-        }
-    };
-
-    AdventCalendarAdmin.init();
-});
+        cancelDoor

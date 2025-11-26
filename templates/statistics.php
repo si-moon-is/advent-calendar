@@ -27,7 +27,6 @@ $selected_calendar = isset($_GET['calendar_id']) ? intval($_GET['calendar_id']) 
         </div>
         
         <div id="stats-content">
-            <!-- Stats will be loaded here via AJAX -->
             <div class="stats-overview">
                 <div class="stat-card">
                     <div class="stat-number">0</div>
@@ -42,12 +41,31 @@ $selected_calendar = isset($_GET['calendar_id']) ? intval($_GET['calendar_id']) 
                     <div class="stat-label">Najpopularniejsze drzwi</div>
                 </div>
             </div>
+            
+            <div class="stats-details">
+                <div class="stats-section">
+                    <h3>Otwarcia według dni</h3>
+                    <div id="daily-stats-chart" style="height: 300px; background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="stats-section">
+                    <h3>Top 5 najpopularniejszych drzwi</h3>
+                    <div id="popular-doors-chart" style="height: 300px; background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <canvas id="doorsChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     <?php endif; ?>
 </div>
 
 <script>
 jQuery(document).ready(function($) {
+    let dailyChart = null;
+    let doorsChart = null;
+    
     function loadStats(calendarId) {
         $.ajax({
             url: '<?php echo admin_url('admin-ajax.php'); ?>',
@@ -60,6 +78,7 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     updateStatsDisplay(response.data);
+                    updateCharts(response.data);
                 }
             }
         });
@@ -78,13 +97,137 @@ jQuery(document).ready(function($) {
         }
     }
     
+    function updateCharts(stats) {
+        updateDailyChart(stats.daily_opens);
+        updateDoorsChart(stats.popular_doors);
+    }
+    
+    function updateDailyChart(dailyOpens) {
+        const ctx = document.getElementById('dailyChart').getContext('2d');
+        
+        if (dailyChart) {
+            dailyChart.destroy();
+        }
+        
+        const labels = dailyOpens ? dailyOpens.map(item => item.date) : [];
+        const data = dailyOpens ? dailyOpens.map(item => item.count) : [];
+        
+        dailyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Otwarcia dzienne',
+                    data: data,
+                    borderColor: '#c41e3a',
+                    backgroundColor: 'rgba(196, 30, 58, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Liczba otwarć'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Data'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function updateDoorsChart(popularDoors) {
+        const ctx = document.getElementById('doorsChart').getContext('2d');
+        
+        if (doorsChart) {
+            doorsChart.destroy();
+        }
+        
+        const labels = popularDoors ? popularDoors.map(item => 'Drzwi ' + item.door_number) : [];
+        const data = popularDoors ? popularDoors.map(item => item.open_count) : [];
+        const backgroundColors = [
+            '#c41e3a', '#165b33', '#ffd700', '#74b9ff', '#2d3436'
+        ];
+        
+        doorsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Liczba otwarć',
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Liczba otwarć'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Numer drzwi'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
     $('#stats-calendar-select').on('change', function() {
         loadStats($(this).val());
     });
     
-    // Load initial stats
     if ($('#stats-calendar-select').val()) {
         loadStats($('#stats-calendar-select').val());
     }
 });
 </script>
+
+<style>
+.stats-details {
+    margin-top: 30px;
+}
+
+.stats-section {
+    margin-bottom: 40px;
+}
+
+.stats-section h3 {
+    margin-bottom: 15px;
+    color: #333;
+    border-bottom: 2px solid #c41e3a;
+    padding-bottom: 5px;
+}
+</style>

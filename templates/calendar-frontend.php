@@ -40,24 +40,24 @@ $total_doors = $columns * $rows;
     ?>
         
         <div class="advent-calendar-door door <?php echo $door_class; ?>" 
-             data-door-id="<?php echo $door ? $door->id : '0'; ?>"
-             data-calendar-id="<?php echo $calendar_id; ?>">
-            
-            <span class="door-number"><?php echo $i; ?></span>
-            
-            <?php if ($is_open && $door && $door->image_url): ?>
-                <div class="door-content">
-                    <img src="<?php echo esc_url($door->image_url); ?>" alt="Door <?php echo $i; ?>">
+         data-door-id="<?php echo $door ? $door->id : '0'; ?>"
+         data-calendar-id="<?php echo $calendar_id; ?>">
+        
+        <span class="door-number"><?php echo $i; ?></span>
+        
+        <?php if ($user_has_opened && $door && $door->image_url): ?>
+            <div class="door-content">
+                <img src="<?php echo esc_url($door->image_url); ?>" alt="Door <?php echo $i; ?>">
+            </div>
+        <?php elseif ($user_has_opened && $door): ?>
+            <div class="door-content">
+                <div class="door-default-content">
+                    <span class="door-icon">🎁</span>
                 </div>
-            <?php elseif ($is_open && $door): ?>
-                <div class="door-content">
-                    <div class="door-default-content">
-                        <span class="door-icon">🎁</span>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
-    <?php endfor; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endfor; ?>
 </div>
 
 <style>

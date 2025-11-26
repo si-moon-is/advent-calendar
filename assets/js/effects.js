@@ -25,7 +25,7 @@ function createSnow() {
     
     for (let i = 0; i < 50; i++) {
         const snow = document.createElement('div');
-        snow.className = 'snow';
+        snow.className = 'snowflake';
         snow.textContent = snowflakes[Math.floor(Math.random() * snowflakes.length)];
         snow.style.left = Math.random() * 100 + 'vw';
         snow.style.animationDuration = (Math.random() * 5 + 5) + 's';
@@ -38,3 +38,50 @@ function createSnow() {
         }, 10000);
     }
 }
+
+function createSparkles() {
+    const container = document.body;
+    const sparkleCount = 30;
+    
+    for (let i = 0; i < sparkleCount; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.left = Math.random() * 100 + 'vw';
+        sparkle.style.top = Math.random() * 100 + 'vh';
+        sparkle.style.animationDelay = Math.random() * 2 + 's';
+        
+        container.appendChild(sparkle);
+        
+        setTimeout(() => {
+            sparkle.remove();
+        }, 2000);
+    }
+}
+
+function createStars() {
+    const container = document.body;
+    const starCount = 20;
+    
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = Math.random() * 100 + 'vw';
+        star.style.top = Math.random() * 100 + 'vh';
+        star.style.animationDelay = Math.random() * 2 + 's';
+        
+        container.appendChild(star);
+        
+        setTimeout(() => {
+            star.remove();
+        }, 3000);
+    }
+}
+
+jQuery(document).ready(function($) {
+    window.adventCalendarEffects = {
+        confetti: createConfetti,
+        snow: createSnow,
+        sparkles: createSparkles,
+        stars: createStars
+    };
+});

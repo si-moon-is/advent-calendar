@@ -3,7 +3,7 @@
  * Plugin Name: Super Kalendarz Adwentowy
  * Plugin URI: https://twoja-strona.pl
  * Description: Dodaj piękny, interaktywny kalendarz adwentowy na swojej stronie WordPress
- * Version: 2.0.1
+ * Version: 2.0.2
  * Author: Szymon Koscikiewicz
  * License: GPL v2 or later
  * Text Domain: advent-calendar
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definicje stałych
-define('ADVENT_CALENDAR_VERSION', '2.0.1');
+define('ADVENT_CALENDAR_VERSION', '2.0.2');
 define('ADVENT_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ADVENT_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 

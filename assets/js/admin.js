@@ -71,41 +71,42 @@ jQuery(document).ready(function($) {
             button.html('<span class="spinner"></span> Zapisywanie...');
 
             $.ajax({
-                url: adventCalendar.ajaxurl,
-                type: 'POST',
-                data: formData,
-                success: (response) => {
-                    if (response.success) {
-                        this.showMessage(response.data.message, 'success');
-                        
-                        if (response.data.redirect) {
-                            // Nowy kalendarz - przekieruj do edycji
-                            setTimeout(() => {
-                                window.location.href = response.data.redirect;
-                            }, 1000);
-                        } else {
-                            // Aktualizacja istniejącego kalendarza
-                            $('#calendar-id').val(response.data.id);
-                            button.html('Zaktualizowano!');
-                            setTimeout(() => {
-                                button.html('Zaktualizuj Kalendarz');
-                            }, 2000);
-                        }
-                    } else {
-                        this.showMessage(response.data || 'Wystąpił nieznany błąd', 'error');
-                    }
-                },
-                error: (xhr, status, error) => {
-                    console.error('AJAX Error:', error);
-                    console.error('Status:', status);
-                    console.error('Response:', xhr.responseText);
-                    this.showMessage('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
-                },
-                complete: () => {
-                    button.prop('disabled', false).removeClass('loading');
+        url: adventCalendar.ajaxurl,
+        type: 'POST',
+        data: formData,
+        success: (response) => {
+            if (response.success) {
+                this.showMessage(response.data.message, 'success');
+                
+                if (response.data.redirect) {
+                    // Nowy kalendarz - przekieruj
+                    setTimeout(() => {
+                        window.location.href = response.data.redirect;
+                    }, 1000);
+                } else {
+                    // Aktualizacja istniejącego kalendarza - ODSWIEŻ STRONĘ
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 }
-            });
+            } else {
+                this.showMessage(response.data || 'Wystąpił nieznany błąd', 'error');
+            }
         },
+        error: (xhr, status, error) => {
+            console.error('AJAX Error:', error);
+            this.showMessage('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
+        },
+        complete: () => {
+            button.prop('disabled', false).removeClass('loading');
+            if (calendarId) {
+                button.html('Zaktualizuj Kalendarz');
+            } else {
+                button.html('Utwórz Kalendarz');
+            }
+        }
+    });
+},
 
         deleteCalendar: function(e) {
             e.preventDefault();

@@ -10,7 +10,8 @@ $theme = $atts['theme'] ?? $settings['theme'] ?? 'christmas';
 
 <div class="advent-calendar advent-theme-<?php echo esc_attr($settings['theme'] ?? 'christmas'); ?>" 
      data-calendar-id="<?php echo $calendar_id; ?>" 
-     data-settings="<?php echo esc_attr(json_encode($settings)); ?>">
+     data-settings="<?php echo esc_attr(json_encode($settings)); ?>"
+     style="display: grid; grid-template-columns: repeat(<?php echo $columns; ?>, 1fr); gap: 15px; margin: 30px 0; padding: 30px;">
     
     <?php 
     $total_doors = $columns * ($settings['rows'] ?? 4);

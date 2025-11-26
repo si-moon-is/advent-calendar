@@ -35,7 +35,7 @@ $calendars = Advent_Calendar::get_calendars();
                     
                     <div class="calendar-actions">
                         <a href="<?php echo admin_url('admin.php?page=advent-calendar-new&calendar_id=' . $calendar->id); ?>" class="btn btn-primary">Edytuj</a>
-                        <a href="#" class="btn btn-secondary" onclick="alert('Shortcode: [advent_calendar id=&quot;<?php echo $calendar->id; ?>&quot;]')">Pobierz Shortcode</a>
+                        <a href="#" class="btn btn-secondary get-shortcode" data-calendar-id="<?php echo $calendar->id; ?>">Pobierz Shortcode</a>
                         <button class="btn btn-danger delete-calendar" data-calendar-id="<?php echo $calendar->id; ?>">Usuń</button>
                     </div>
                 </div>
@@ -57,11 +57,11 @@ jQuery(document).ready(function($) {
         var calendarId = button.data('calendar-id');
         
         $.ajax({
-            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+            url: adventCalendar.ajaxurl,
             type: 'POST',
             data: {
-                action: 'delete_calendar',
-                nonce: '<?php echo wp_create_nonce('advent_calendar_admin_nonce'); ?>',
+                action: 'advent_calendar_delete',
+                nonce: adventCalendar.nonce,
                 calendar_id: calendarId
             },
             success: function(response) {
@@ -72,6 +72,12 @@ jQuery(document).ready(function($) {
                 }
             }
         });
+    });
+
+    $('.get-shortcode').on('click', function(e) {
+        e.preventDefault();
+        var calendarId = $(this).data('calendar-id');
+        alert('Shortcode: [advent_calendar id="' + calendarId + '"]');
     });
 });
 </script>

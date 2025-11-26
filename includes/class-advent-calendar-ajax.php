@@ -15,6 +15,7 @@ class Advent_Calendar_Ajax {
         
         $door_id = intval($_POST['door_id']);
         $calendar_id = intval($_POST['calendar_id']);
+        $user_session = sanitize_text_field($_POST['user_session'] ?? '');
         
         $door = Advent_Calendar::get_door($door_id);
         $calendar = Advent_Calendar::get_calendar($calendar_id);

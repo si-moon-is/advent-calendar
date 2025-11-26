@@ -1,8 +1,11 @@
 jQuery(document).ready(function($) {
     'use strict';
     
+    console.log('Advent Calendar Frontend JS loaded!'); // DODAJ TĘ LINIĘ
+    
     const AdventCalendar = {
         init: function() {
+            console.log('Initializing Advent Calendar...'); // DODAJ TĘ LINIĘ
             this.bindEvents();
             this.checkOpenedDoors();
         },

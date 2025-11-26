@@ -41,19 +41,19 @@ class Advent_Calendar {
         ) $charset_collate;";
         
         $sql3 = "CREATE TABLE $stats_table (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            calendar_id mediumint(9) NOT NULL,
-            door_id mediumint(9) NOT NULL,
-            user_ip varchar(45),
-            user_agent text,
-            user_session varchar(64) NOT NULL,
-            opened_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY calendar_id (calendar_id),
-            KEY door_id (door_id),
-            KEY user_session (user_session),
-            KEY opened_at (opened_at)
-        ) $charset_collate;";
+    id mediumint(9) NOT NULL AUTO_INCREMENT,
+    calendar_id mediumint(9) NOT NULL,
+    door_id mediumint(9) NOT NULL,
+    user_ip varchar(45),
+    user_agent text,
+    user_session varchar(64) NOT NULL,  // DODAJ TĘ KOLUMNĘ
+    opened_at datetime DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY calendar_id (calendar_id),
+    KEY door_id (door_id),
+    KEY user_session (user_session),    // DODAJ INDEKS
+    KEY opened_at (opened_at)
+) $charset_collate;";
         
         $sql4 = "CREATE TABLE $styles_table (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -77,29 +77,6 @@ class Advent_Calendar {
         return true;
     }
 
-    public static function check_and_update_tables() {
-        global $wpdb;
-        
-        $table_name = $wpdb->prefix . 'advent_calendar_stats';
-        
-        // Sprawdź czy kolumna user_session istnieje
-        $column_exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'user_session'");
-        
-        if (!$column_exists) {
-            error_log('Advent Calendar: user_session column missing, adding it...');
-            
-            // Dodaj kolumnę
-            $result = $wpdb->query("ALTER TABLE $table_name ADD COLUMN user_session VARCHAR(64) NOT NULL AFTER user_agent");
-            
-            if ($result !== false) {
-                // Dodaj indeks
-                $wpdb->query("ALTER TABLE $table_name ADD INDEX user_session (user_session)");
-                error_log('Advent Calendar: user_session column added successfully');
-            } else {
-                error_log('Advent Calendar: Failed to add user_session column: ' . $wpdb->last_error);
-            }
-        }
-    }
       
     public static function get_calendars() {
         global $wpdb;
@@ -256,89 +233,89 @@ class Advent_Calendar {
     }
     
     public static function log_door_open($door_id, $calendar_id) {
-        global $wpdb;
-        
-        // Sprawdź czy użytkownik już otworzył te drzwi (na podstawie sesji)
-        $user_session = self::get_user_session();
-        
-        $already_opened = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
-             WHERE door_id = %d AND user_session = %s",
-            $door_id, $user_session
-        ));
-        
-        if ($already_opened) {
-            // Użytkownik już otworzył te drzwi - zwróć success ale nie zwiększaj licznika
-            return true;
-        }
-        
-        // Zwiększ globalny licznik otwarć (do statystyk)
-        $wpdb->query($wpdb->prepare(
-            "UPDATE {$wpdb->prefix}advent_calendar_doors 
-             SET open_count = open_count + 1 
-             WHERE id = %d",
-            $door_id
-        ));
-        
-        // Zapisz otwarcie dla tego użytkownika
-        $result = $wpdb->insert(
-            $wpdb->prefix . 'advent_calendar_stats',
-            array(
-                'calendar_id' => $calendar_id,
-                'door_id' => $door_id,
-                'user_ip' => self::get_user_ip(),
-                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-                'user_session' => $user_session,
-                'opened_at' => current_time('mysql')
-            ),
-            array('%d', '%d', '%s', '%s', '%s', '%s')
-        );
-        
-        return $result ? $wpdb->insert_id : false;
+    global $wpdb;
+    
+    // Sprawdź czy użytkownik już otworzył te drzwi (na podstawie sesji)
+    $user_session = self::get_user_session();
+    
+    $already_opened = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
+         WHERE door_id = %d AND user_session = %s",
+        $door_id, $user_session
+    ));
+    
+    if ($already_opened) {
+        // Użytkownik już otworzył te drzwi - zwróć success ale nie zwiększaj licznika
+        return true;
     }
+    
+    // Zwiększ globalny licznik otwarć (do statystyk)
+    $wpdb->query($wpdb->prepare(
+        "UPDATE {$wpdb->prefix}advent_calendar_doors 
+         SET open_count = open_count + 1 
+         WHERE id = %d",
+        $door_id
+    ));
+    
+    // Zapisz otwarcie dla tego użytkownika
+    $result = $wpdb->insert(
+        $wpdb->prefix . 'advent_calendar_stats',
+        array(
+            'calendar_id' => $calendar_id,
+            'door_id' => $door_id,
+            'user_ip' => self::get_user_ip(),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'user_session' => $user_session, // DODAJ TE LINIĘ
+            'opened_at' => current_time('mysql')
+        ),
+        array('%d', '%d', '%s', '%s', '%s', '%s')
+    );
+    
+    return $result ? $wpdb->insert_id : false;
+}
 
     public static function has_user_opened_door_with_session($door_id, $user_session) {
-        global $wpdb;
-        
-        $opened = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
-             WHERE door_id = %d AND user_session = %s",
-            $door_id, $user_session
-        ));
-        
-        return $opened > 0;
-    }
+    global $wpdb;
+    
+    $opened = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
+         WHERE door_id = %d AND user_session = %s",
+        $door_id, $user_session
+    ));
+    
+    return $opened > 0;
+}
 
-    /**
-     * Zapisuje otwarcie drzwi z konkretną sesją
-     */
-    public static function log_door_open_with_session($door_id, $calendar_id, $user_session) {
-        global $wpdb;
-        
-        // Zwiększ globalny licznik
-        $wpdb->query($wpdb->prepare(
-            "UPDATE {$wpdb->prefix}advent_calendar_doors 
-             SET open_count = open_count + 1 
-             WHERE id = %d",
-            $door_id
-        ));
-        
-        // Zapisz otwarcie dla tego użytkownika
-        $result = $wpdb->insert(
-            $wpdb->prefix . 'advent_calendar_stats',
-            array(
-                'calendar_id' => $calendar_id,
-                'door_id' => $door_id,
-                'user_ip' => self::get_user_ip(),
-                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-                'user_session' => $user_session,
-                'opened_at' => current_time('mysql')
-            ),
-            array('%d', '%d', '%s', '%s', '%s', '%s')
-        );
-        
-        return $result ? $wpdb->insert_id : false;
-    }
+/**
+ * Zapisuje otwarcie drzwi z konkretną sesją
+ */
+public static function log_door_open_with_session($door_id, $calendar_id, $user_session) {
+    global $wpdb;
+    
+    // Zwiększ globalny licznik
+    $wpdb->query($wpdb->prepare(
+        "UPDATE {$wpdb->prefix}advent_calendar_doors 
+         SET open_count = open_count + 1 
+         WHERE id = %d",
+        $door_id
+    ));
+    
+    // Zapisz otwarcie dla tego użytkownika
+    $result = $wpdb->insert(
+        $wpdb->prefix . 'advent_calendar_stats',
+        array(
+            'calendar_id' => $calendar_id,
+            'door_id' => $door_id,
+            'user_ip' => self::get_user_ip(),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'user_session' => $user_session,
+            'opened_at' => current_time('mysql')
+        ),
+        array('%d', '%d', '%s', '%s', '%s', '%s')
+    );
+    
+    return $result ? $wpdb->insert_id : false;
+}
     
     private static function get_user_ip() {
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
@@ -351,21 +328,21 @@ class Advent_Calendar {
     }
 
     private static function get_user_session() {
-        // Sprawdź czy przychodzi z JavaScript
-        if (isset($_POST['user_session']) && !empty($_POST['user_session'])) {
-            return sanitize_text_field($_POST['user_session']);
-        }
-        
-        if (isset($_GET['user_session']) && !empty($_GET['user_session'])) {
-            return sanitize_text_field($_GET['user_session']);
-        }
-        
-        // Domyślna sesja (dla starych wersji)
-        if (!session_id()) {
-            session_start();
-        }
-        return session_id() . '_' . ($_SERVER['HTTP_USER_AGENT'] ?? '');
+    // Sprawdź czy przychodzi z JavaScript
+    if (isset($_POST['user_session']) && !empty($_POST['user_session'])) {
+        return sanitize_text_field($_POST['user_session']);
     }
+    
+    if (isset($_GET['user_session']) && !empty($_GET['user_session'])) {
+        return sanitize_text_field($_GET['user_session']);
+    }
+    
+    // Domyślna sesja (dla starych wersji)
+    if (!session_id()) {
+        session_start();
+    }
+    return session_id() . '_' . ($_SERVER['HTTP_USER_AGENT'] ?? '');
+}
     
     public static function has_user_opened_door($door_id) {
         global $wpdb;
@@ -405,64 +382,4 @@ class Advent_Calendar {
         ));
     }
 }
-
-// Klasa do zarządzania aktualizacjami bazy danych
-define('ADVENT_CALENDAR_DB_VERSION', '1.1');
-
-class Advent_Calendar_Plugin {
-    
-    public function __construct() {
-        register_activation_hook(__FILE__, array($this, 'activate'));
-        add_action('plugins_loaded', array($this, 'check_db_update'));
-    }
-    
-    public function activate() {
-        Advent_Calendar::create_tables();
-        update_option('advent_calendar_db_version', ADVENT_CALENDAR_DB_VERSION);
-    }
-    
-    public function check_db_update() {
-        $current_version = get_option('advent_calendar_db_version', '1.0');
-        
-        if (version_compare($current_version, ADVENT_CALENDAR_DB_VERSION, '<')) {
-            $this->update_database($current_version);
-            update_option('advent_calendar_db_version', ADVENT_CALENDAR_DB_VERSION);
-        }
-    }
-    
-    public function update_database($from_version) {
-        global $wpdb;
-        
-        error_log("Advent Calendar: Updating database from version $from_version to " . ADVENT_CALENDAR_DB_VERSION);
-        
-        // Aktualizacje dla wersji 1.1 - dodanie kolumny user_session
-        if (version_compare($from_version, '1.1', '<')) {
-            $this->add_user_session_column();
-        }
-    }
-    
-    private function add_user_session_column() {
-        global $wpdb;
-        
-        $table_name = $wpdb->prefix . 'advent_calendar_stats';
-        
-        // Sprawdź czy kolumna już istnieje
-        $column_exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'user_session'");
-        
-        if (!$column_exists) {
-            $result = $wpdb->query("ALTER TABLE $table_name ADD COLUMN user_session VARCHAR(64) NOT NULL AFTER user_agent");
-            
-            if ($result !== false) {
-                // Dodaj indeks
-                $wpdb->query("ALTER TABLE $table_name ADD INDEX user_session (user_session)");
-                error_log('Advent Calendar: Successfully added user_session column');
-            } else {
-                error_log('Advent Calendar: Failed to add user_session column: ' . $wpdb->last_error);
-            }
-        }
-    }
-}
-
-// Inicjalizacja klasy aktualizacji
-new Advent_Calendar_Plugin();
 ?>

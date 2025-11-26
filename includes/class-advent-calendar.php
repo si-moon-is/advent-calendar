@@ -284,14 +284,21 @@ class Advent_Calendar {
     }
 
     private static function get_user_session() {
-        if (!session_id()) {
-            session_start();
-        }
-        
-        // Użyj session_id + user agent dla lepszej unikalności
-        $session_key = session_id() . '_' . ($_SERVER['HTTP_USER_AGENT'] ?? '');
-        return md5($session_key);
+    // Sprawdź czy przychodzi z JavaScript
+    if (isset($_POST['user_session']) && !empty($_POST['user_session'])) {
+        return sanitize_text_field($_POST['user_session']);
     }
+    
+    if (isset($_GET['user_session']) && !empty($_GET['user_session'])) {
+        return sanitize_text_field($_GET['user_session']);
+    }
+    
+    // Domyślna sesja (dla starych wersji)
+    if (!session_id()) {
+        session_start();
+    }
+    return session_id() . '_' . ($_SERVER['HTTP_USER_AGENT'] ?? '');
+}
     
     public static function has_user_opened_door($door_id) {
         global $wpdb;

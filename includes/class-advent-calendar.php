@@ -230,31 +230,46 @@ class Advent_Calendar {
     }
     
     public static function log_door_open($door_id, $calendar_id) {
-        global $wpdb;
-        
-        // Update door open count
-        $wpdb->query($wpdb->prepare(
-            "UPDATE {$wpdb->prefix}advent_calendar_doors 
-             SET open_count = open_count + 1, is_open = 1 
-             WHERE id = %d",
-            $door_id
-        ));
-        
-        // Log the opening
-        $result = $wpdb->insert(
-            $wpdb->prefix . 'advent_calendar_stats',
-            array(
-                'calendar_id' => $calendar_id,
-                'door_id' => $door_id,
-                'user_ip' => self::get_user_ip(),
-                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-                'opened_at' => current_time('mysql')
-            ),
-            array('%d', '%d', '%s', '%s', '%s')
-        );
-        
-        return $result ? $wpdb->insert_id : false;
+    global $wpdb;
+    
+    // Sprawdź czy użytkownik już otworzył te drzwi (na podstawie sesji)
+    $user_session = self::get_user_session();
+    
+    $already_opened = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
+         WHERE door_id = %d AND user_session = %s",
+        $door_id, $user_session
+    ));
+    
+    if ($already_opened) {
+        // Użytkownik już otworzył te drzwi - zwróć success ale nie zwiększaj licznika
+        return true;
     }
+    
+    // Zwiększ globalny licznik otwarć (do statystyk)
+    $wpdb->query($wpdb->prepare(
+        "UPDATE {$wpdb->prefix}advent_calendar_doors 
+         SET open_count = open_count + 1 
+         WHERE id = %d",
+        $door_id
+    ));
+    
+    // Zapisz otwarcie dla tego użytkownika
+    $result = $wpdb->insert(
+        $wpdb->prefix . 'advent_calendar_stats',
+        array(
+            'calendar_id' => $calendar_id,
+            'door_id' => $door_id,
+            'user_ip' => self::get_user_ip(),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'user_session' => $user_session, // DODAJ TE LINIĘ
+            'opened_at' => current_time('mysql')
+        ),
+        array('%d', '%d', '%s', '%s', '%s', '%s')
+    );
+    
+    return $result ? $wpdb->insert_id : false;
+}
     
     private static function get_user_ip() {
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) {

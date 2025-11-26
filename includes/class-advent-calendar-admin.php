@@ -70,7 +70,6 @@ class Advent_Calendar_Admin {
         wp_enqueue_script('advent-calendar-admin', ADVENT_CALENDAR_PLUGIN_URL . 'assets/js/admin.js', array('jquery', 'wp-color-picker'), ADVENT_CALENDAR_VERSION, true);
         wp_enqueue_media();
         
-        // Dodaj Chart.js tylko na stronie statystyk
         if ($hook === 'advent-calendar_page_advent-calendar-stats') {
             wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js', array(), '3.9.1', true);
         }
@@ -98,38 +97,54 @@ class Advent_Calendar_Admin {
     }
     
     public function ajax_save_calendar() {
-        check_ajax_referer('advent_calendar_nonce', 'nonce');
+        error_log('ADVENT CALENDAR DEBUG: AJAX save_calendar started');
+        error_log('ADVENT CALENDAR DEBUG: POST data: ' . print_r($_POST, true));
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce')) {
+            error_log('ADVENT CALENDAR ERROR: Nonce verification failed');
+            wp_send_json_error('Błąd bezpieczeństwa (nonce)');
+        }
         
         if (!current_user_can('manage_options')) {
+            error_log('ADVENT CALENDAR ERROR: User does not have manage_options capability');
             wp_send_json_error('Brak uprawnień');
+        }
+        
+        if (empty($_POST['title'])) {
+            error_log('ADVENT CALENDAR ERROR: Empty title in POST');
+            wp_send_json_error('Nazwa kalendarza jest wymagana');
         }
         
         $data = array(
             'id' => isset($_POST['id']) ? intval($_POST['id']) : null,
             'title' => sanitize_text_field($_POST['title']),
             'settings' => array(
-                'columns' => intval($_POST['columns']),
-                'rows' => intval($_POST['rows']),
-                'start_date' => sanitize_text_field($_POST['start_date']),
-                'end_date' => sanitize_text_field($_POST['end_date']),
-                'theme' => sanitize_text_field($_POST['theme']),
-                'default_animation' => sanitize_text_field($_POST['default_animation']),
+                'columns' => isset($_POST['columns']) ? intval($_POST['columns']) : 6,
+                'rows' => isset($_POST['rows']) ? intval($_POST['rows']) : 4,
+                'start_date' => isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : date('Y-12-01'),
+                'end_date' => isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : date('Y-12-24'),
+                'theme' => isset($_POST['theme']) ? sanitize_text_field($_POST['theme']) : 'christmas',
+                'default_animation' => isset($_POST['default_animation']) ? sanitize_text_field($_POST['default_animation']) : 'fade',
                 'snow_effect' => isset($_POST['snow_effect']) && $_POST['snow_effect'] == '1',
                 'confetti_effect' => isset($_POST['confetti_effect']) && $_POST['confetti_effect'] == '1',
                 'enable_stats' => isset($_POST['enable_stats']) && $_POST['enable_stats'] == '1'
             )
         );
         
+        error_log('ADVENT CALENDAR DEBUG: Processed data for save: ' . print_r($data, true));
+        
         $calendar_id = Advent_Calendar::save_calendar($data);
         
         if ($calendar_id) {
+            error_log('ADVENT CALENDAR SUCCESS: Calendar saved with ID: ' . $calendar_id);
             wp_send_json_success(array(
                 'id' => $calendar_id,
                 'message' => 'Kalendarz zapisany pomyślnie!',
                 'redirect' => !isset($_POST['id']) ? admin_url('admin.php?page=advent-calendar-new&calendar_id=' . $calendar_id) : false
             ));
         } else {
-            wp_send_json_error('Błąd podczas zapisywania kalendarza');
+            error_log('ADVENT CALENDAR ERROR: Calendar save failed');
+            wp_send_json_error('Błąd podczas zapisywania kalendarza. Sprawdź logi serwera.');
         }
     }
     

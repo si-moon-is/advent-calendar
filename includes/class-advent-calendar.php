@@ -77,30 +77,7 @@ class Advent_Calendar {
         return true;
     }
 
-    public static function check_and_update_tables() {
-    global $wpdb;
-    
-    $table_name = $wpdb->prefix . 'advent_calendar_stats';
-    
-    // Sprawdź czy kolumna user_session istnieje
-    $column_exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'user_session'");
-    
-    if (!$column_exists) {
-        error_log('Advent Calendar: user_session column missing, adding it...');
-        
-        // Dodaj kolumnę
-        $result = $wpdb->query("ALTER TABLE $table_name ADD COLUMN user_session VARCHAR(64) NOT NULL AFTER user_agent");
-        
-        if ($result !== false) {
-            // Dodaj indeks
-            $wpdb->query("ALTER TABLE $table_name ADD INDEX user_session (user_session)");
-            error_log('Advent Calendar: user_session column added successfully');
-        } else {
-            error_log('Advent Calendar: Failed to add user_session column: ' . $wpdb->last_error);
-        }
-    }
-}
-    
+      
     public static function get_calendars() {
         global $wpdb;
         $table = $wpdb->prefix . 'advent_calendars';

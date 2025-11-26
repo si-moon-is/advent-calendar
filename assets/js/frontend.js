@@ -1,7 +1,10 @@
 jQuery(document).ready(function($) {
     'use strict';
     
-    console.log('Advent Calendar Frontend JS loaded!'); // DODAJ TĘ LINIĘ
+    console.log('Advent Calendar Frontend JS loaded!');
+    console.log('adventCalendar object:', adventCalendar); 
+    console.log('ajaxurl:', adventCalendar.ajaxurl);
+    console.log('nonce:', adventCalendar.nonce);
     
     const AdventCalendar = {
         init: function() {

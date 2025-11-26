@@ -8,9 +8,10 @@ jQuery(document).ready(function($) {
     
     const AdventCalendar = {
         init: function() {
-            console.log('Initializing Advent Calendar...'); // DODAJ TĘ LINIĘ
+            console.log('Initializing Advent Calendar...');
             this.bindEvents();
             this.checkOpenedDoors();
+            this.checkLocalStorageDoors();
         },
         
         bindEvents: function() {
@@ -227,6 +228,40 @@ markDoorAsOpened: function(doorId, userSession) {
                 errorDiv.fadeOut(() => errorDiv.remove());
             }, 3000);
         },
+
+        checkLocalStorageDoors: function() {
+        const userSession = localStorage.getItem('advent_calendar_session');
+        if (!userSession) return;
+        
+        const openedDoors = JSON.parse(localStorage.getItem('advent_opened_doors') || '{}');
+        const userOpenedDoors = openedDoors[userSession] || [];
+        
+        userOpenedDoors.forEach(doorId => {
+            const $door = $('.advent-calendar-door[data-door-id="' + doorId + '"]');
+            if ($door.length && !$door.hasClass('open')) {
+                $door.removeClass('available locked').addClass('open');
+                // Możesz też załadować zawartość drzwi
+                this.loadDoorContent(doorId, $door);
+            }
+        });
+    },
+
+        loadDoorContent: function(doorId, $door) {
+        $.ajax({
+            url: adventCalendar.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'get_door_content',
+                door_id: doorId,
+                nonce: adventCalendar.nonce
+            },
+            success: (response) => {
+                if (response.success) {
+                    $door.find('.door-content').html(response.data.content);
+                }
+            }
+        });
+    },
         
         checkOpenedDoors: function() {
             $('.advent-calendar-door.open').each(function() {

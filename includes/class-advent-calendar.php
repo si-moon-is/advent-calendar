@@ -122,6 +122,7 @@ class Advent_Calendar {
         }
         
         if (isset($data['id']) && !empty($data['id'])) {
+            // Aktualizacja istniejącego kalendarza
             $result = $wpdb->update(
                 $wpdb->prefix . 'advent_calendars',
                 array(
@@ -134,8 +135,13 @@ class Advent_Calendar {
                 array('%d')
             );
             
-            return $result !== false ? $data['id'] : false;
+            if ($result === false) {
+                return false;
+            }
+            
+            return $data['id'];
         } else {
+            // Tworzenie nowego kalendarza
             $result = $wpdb->insert(
                 $wpdb->prefix . 'advent_calendars',
                 array(
@@ -146,7 +152,11 @@ class Advent_Calendar {
                 array('%s', '%s', '%s')
             );
             
-            return $result ? $wpdb->insert_id : false;
+            if ($result === false) {
+                return false;
+            }
+            
+            return $wpdb->insert_id;
         }
     }
     
@@ -273,6 +283,28 @@ class Advent_Calendar {
              WHERE calendar_id = %d AND door_number = %d",
             $calendar_id, $door_number
         ));
+    }
+    
+    public static function update_calendar_settings($calendar_id, $settings) {
+        global $wpdb;
+        
+        $settings_json = json_encode($settings);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return false;
+        }
+        
+        $result = $wpdb->update(
+            $wpdb->prefix . 'advent_calendars',
+            array(
+                'settings' => $settings_json,
+                'updated_at' => current_time('mysql')
+            ),
+            array('id' => $calendar_id),
+            array('%s', '%s'),
+            array('%d')
+        );
+        
+        return $result !== false;
     }
 }
 ?>

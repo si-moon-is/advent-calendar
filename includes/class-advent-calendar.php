@@ -328,20 +328,32 @@ public static function log_door_open_with_session($door_id, $calendar_id, $user_
     }
 
     private static function get_user_session() {
-    // Sprawdź czy przychodzi z JavaScript
+    $cookie_name = 'advent_calendar_user_session';
+    
+    // Sprawdź czy mamy user_session z AJAX
     if (isset($_POST['user_session']) && !empty($_POST['user_session'])) {
-        return sanitize_text_field($_POST['user_session']);
+        $session = sanitize_text_field($_POST['user_session']);
+        // Zapisz też w cookie na przyszłość
+        setcookie($cookie_name, $session, time() + (365 * DAY_IN_SECONDS), '/');
+        return $session;
     }
     
-    if (isset($_GET['user_session']) && !empty($_GET['user_session'])) {
-        return sanitize_text_field($_GET['user_session']);
+    // Sprawdź cookie
+    if (isset($_COOKIE[$cookie_name]) && !empty($_COOKIE[$cookie_name])) {
+        return $_COOKIE[$cookie_name];
     }
     
-    // Domyślna sesja (dla starych wersji)
-    if (!session_id()) {
-        session_start();
+    // Sprawdź localStorage przez JavaScript (dodamy później)
+    if (isset($_POST['local_storage_session']) && !empty($_POST['local_storage_session'])) {
+        $session = sanitize_text_field($_POST['local_storage_session']);
+        setcookie($cookie_name, $session, time() + (365 * DAY_IN_SECONDS), '/');
+        return $session;
     }
-    return session_id() . '_' . ($_SERVER['HTTP_USER_AGENT'] ?? '');
+    
+    // Utwórz nową sesję
+    $new_session = 'user_' . uniqid() . '_' . time();
+    setcookie($cookie_name, $new_session, time() + (365 * DAY_IN_SECONDS), '/');
+    return $new_session;
 }
     
     public static function has_user_opened_door($door_id) {

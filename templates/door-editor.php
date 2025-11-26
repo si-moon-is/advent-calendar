@@ -21,11 +21,6 @@ $settings = $calendar ? json_decode($calendar->settings, true) : array(
 
 $total_doors = ($settings['columns'] ?? 6) * ($settings['rows'] ?? 4);
 $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array();
-
-// Sprawdź czy formularz został wysłany
-if (isset($_POST['save_calendar']) && check_admin_referer('save_calendar_nonce')) {
-    $this->save_calendar_from_post();
-}
 ?>
 
 <div class="wrap advent-calendar-admin">
@@ -41,10 +36,8 @@ if (isset($_POST['save_calendar']) && check_admin_referer('save_calendar_nonce')
     
     <!-- Tab: Ustawienia -->
     <div id="settings" class="tab-content active">
-        <form id="calendar-form" method="post">
-            <?php wp_nonce_field('save_calendar_nonce'); ?>
-            <input type="hidden" name="save_calendar" value="1">
-            <input type="hidden" id="calendar-id" name="calendar_id" value="<?php echo $calendar_id; ?>">
+        <div class="form-container">
+            <input type="hidden" id="calendar-id" value="<?php echo $calendar_id; ?>">
             
             <div class="form-group">
                 <label for="calendar-title">Nazwa Kalendarza *</label>
@@ -134,7 +127,7 @@ if (isset($_POST['save_calendar']) && check_admin_referer('save_calendar_nonce')
             <?php if ($calendar): ?>
                 <a href="<?php echo admin_url('admin.php?page=advent-calendar'); ?>" class="btn btn-secondary">Powrót do listy</a>
             <?php endif; ?>
-        </form>
+        </div>
     </div>
     
     <!-- Tab: Edytor Drzwi -->
@@ -164,7 +157,7 @@ if (isset($_POST['save_calendar']) && check_admin_referer('save_calendar_nonce')
             
             <div id="door-form" style="display: none; margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 5px;">
                 <h3>Edytuj Drzwi <span id="door-number-display"></span></h3>
-                <form id="door-editor-form">
+                <div class="door-form-container">
                     <input type="hidden" id="door-id" name="door_id">
                     <input type="hidden" id="door-number" name="door_number">
                     <input type="hidden" name="calendar_id" value="<?php echo $calendar_id; ?>">
@@ -234,9 +227,9 @@ if (isset($_POST['save_calendar']) && check_admin_referer('save_calendar_nonce')
                     
                     <div style="display: flex; gap: 10px;">
                         <button type="button" id="save-door" class="btn btn-primary">Zapisz Drzwi</button>
-                        <button type="button" id="cancel-door" class="btn btn-secondary" style="display: none;">Anuluj</button>
+                        <button type="button" id="cancel-door" class="btn btn-secondary">Anuluj</button>
                     </div>
-                </form>
+                </div>
             </div>
         <?php endif; ?>
     </div>
@@ -283,13 +276,3 @@ if (isset($_POST['save_calendar']) && check_admin_referer('save_calendar_nonce')
         <?php endif; ?>
     </div>
 </div>
-
-<script>
-jQuery(document).ready(function($) {
-    // Zapobiegnij domyślnemu submitowi formularza
-    $('#calendar-form').on('submit', function(e) {
-        e.preventDefault();
-        return false;
-    });
-});
-</script>

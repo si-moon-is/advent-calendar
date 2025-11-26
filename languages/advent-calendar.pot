@@ -1,0 +1,90 @@
+# Copyright (C) 2024 Szymon Koscikiewicz
+# This file is distributed under the same license as the Advent Calendar plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Advent Calendar 2.0.3\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-15 12:00+0000\n"
+"PO-Revision-Date: 2024-01-15 12:00+0000\n"
+"Last-Translator: Szymon Koscikiewicz\n"
+"Language-Team: \n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: advent-calendar.php:6
+msgid "Super Kalendarz Adwentowy"
+msgstr ""
+
+#: advent-calendar.php:7
+msgid "Dodaj piękny, interaktywny kalendarz adwentowy na swojej stronie WordPress"
+msgstr ""
+
+#: includes/class-advent-calendar-admin.php:71
+msgid "Kalendarz zapisany pomyślnie!"
+msgstr ""
+
+#: includes/class-advent-calendar-admin.php:75
+msgid "Błąd podczas zapisywania kalendarza"
+msgstr ""
+
+#: includes/class-advent-calendar-admin.php:89
+msgid "Kalendarz usunięty pomyślnie!"
+msgstr ""
+
+#: includes/class-advent-calendar-admin.php:91
+msgid "Błąd podczas usuwania kalendarza"
+msgstr ""
+
+#: includes/class-advent-calendar-admin.php:113
+msgid "Drzwi zapisane pomyślnie!"
+msgstr ""
+
+#: includes/class-advent-calendar-admin.php:115
+msgid "Błąd podczas zapisywania drzwi"
+msgstr ""
+
+#: includes/class-advent-calendar-admin.php:125
+msgid "Drzwi nie znalezione"
+msgstr ""
+
+#: templates/calendar-admin.php:12
+msgid "Kalendarze Adwentowe"
+msgstr ""
+
+#: templates/calendar-admin.php:13
+msgid "Dodaj Nowy"
+msgstr ""
+
+#: templates/calendar-admin.php:18
+msgid "Nie masz jeszcze żadnych kalendarzy. "
+msgstr ""
+
+#: templates/calendar-admin.php:18
+msgid "Utwórz pierwszy kalendarz"
+msgstr ""
+
+#: templates/door-editor.php:109
+msgid "Najpierw zapisz kalendarz, aby móc edytować drzwi."
+msgstr ""
+
+#: templates/statistics.php:12
+msgid "Statystyki Kalendarzy Adwentowych"
+msgstr ""
+
+#: templates/statistics.php:18
+msgid "Nie masz jeszcze żadnych kalendarzy. "
+msgstr ""
+
+#: templates/statistics.php:18
+msgid "Utwórz pierwszy kalendarz"
+msgstr ""
+
+#: templates/export-import.php:12
+msgid "Eksport / Import Kalendarzy"
+msgstr ""
+
+#: templates/export-import.php:27
+msgid "Nie masz jeszcze żadnych kalendarzy do eksportu."
+msgstr ""

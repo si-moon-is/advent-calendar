@@ -3,7 +3,7 @@
  * Plugin Name: Super Kalendarz Adwentowy
  * Plugin URI: https://twoja-strona.pl
  * Description: Dodaj piękny, interaktywny kalendarz adwentowy na swojej stronie WordPress
- * Version: 1.0.0
+ * Version: 2.0.0
  * Author: Szymon Koscikiewicz
  * License: GPL v2 or later
  * Text Domain: advent-calendar
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definicje stałych
-define('ADVENT_CALENDAR_VERSION', '1.0.0');
+define('ADVENT_CALENDAR_VERSION', '2.0.0');
 define('ADVENT_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ADVENT_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -51,6 +51,9 @@ class Advent_Calendar_Plugin {
         }
         
         new Advent_Calendar_Ajax();
+        new Advent_Calendar_Export_Import();
+        new Advent_Calendar_Statistics();
+        new Advent_Calendar_Styles();
     }
     
     private function load_dependencies() {
@@ -58,6 +61,9 @@ class Advent_Calendar_Plugin {
         require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-admin.php';
         require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-frontend.php';
         require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-ajax.php';
+        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-export-import.php';
+        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-statistics.php';
+        require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-styles.php';
     }
     
     public function activate() {
@@ -71,7 +77,9 @@ class Advent_Calendar_Plugin {
             'animation' => 'fade',
             'theme' => 'christmas',
             'start_date' => date('Y-12-01'),
-            'end_date' => date('Y-12-24')
+            'end_date' => date('Y-12-24'),
+            'enable_stats' => true,
+            'snow_effect' => true
         ));
         
         flush_rewrite_rules();
@@ -84,4 +92,11 @@ class Advent_Calendar_Plugin {
 
 // Inicjalizacja wtyczki
 Advent_Calendar_Plugin::get_instance();
+
+// Rejestracja shortcode
+function advent_calendar_shortcode($atts) {
+    $frontend = new Advent_Calendar_Frontend();
+    return $frontend->calendar_shortcode($atts);
+}
+add_shortcode('advent_calendar', 'advent_calendar_shortcode');
 ?>

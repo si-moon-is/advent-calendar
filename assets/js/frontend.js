@@ -30,6 +30,12 @@ jQuery(document).ready(function($) {
             
             const doorId = door.data('door-id');
             const calendarId = door.data('calendar-id');
+
+            let userSession = localStorage.getItem('advent_calendar_session');
+            if (!userSession) {
+                userSession = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('advent_calendar_session', userSession);
+            }
             
             $.ajax({
                 url: adventCalendar.ajaxurl,

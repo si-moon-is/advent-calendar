@@ -8,7 +8,6 @@ $calendar = $calendar_id ? Advent_Calendar::get_calendar($calendar_id) : null;
 $settings = $calendar ? json_decode($calendar->settings, true) : array();
 $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array();
 
-// Default settings
 $default_settings = array(
     'columns' => 6,
     'rows' => 4,
@@ -31,10 +30,13 @@ $total_doors = $settings['columns'] * $settings['rows'];
         <?php echo $calendar ? 'Edytuj: ' . esc_html($calendar->title) : 'Nowy Kalendarz Adwentowy'; ?>
     </h1>
     
-    <div class="notice-wrap"></div>
+    <a href="<?php echo admin_url('admin.php?page=advent-calendar'); ?>" class="page-title-action">
+        ← Wróć do listy
+    </a>
+    
+    <hr class="wp-header-end">
 
     <div class="editor-container">
-        <!-- Lewa kolumna - Konfiguracja kalendarza -->
         <div class="editor-sidebar">
             <div class="sidebar-section">
                 <h3>Ustawienia Kalendarza</h3>
@@ -151,11 +153,11 @@ $total_doors = $settings['columns'] * $settings['rows'];
             <?php endif; ?>
         </div>
         
-        <!-- Prawa kolumna - Edytor drzwi -->
         <div class="editor-main">
             <?php if ($calendar): ?>
                 <div class="doors-grid-container">
                     <h3>Drzwi Kalendarza (<?php echo $total_doors; ?> drzwi)</h3>
+                    <p>Kliknij na numer drzwi aby edytować jego zawartość</p>
                     
                     <div class="doors-grid" style="grid-template-columns: repeat(<?php echo $settings['columns']; ?>, 1fr);">
                         <?php for ($i = 1; $i <= $total_doors; $i++): 
@@ -183,7 +185,6 @@ $total_doors = $settings['columns'] * $settings['rows'];
                     </div>
                 </div>
                 
-                <!-- Formularz edycji drzwi -->
                 <div id="door-form" style="display: none;">
                     <div class="door-form-header">
                         <h3>Edytuj drzwi <span id="door-number-display"></span></h3>
@@ -332,19 +333,17 @@ $total_doors = $settings['columns'] * $settings['rows'];
     gap: 10px;
 }
 
-.checkbox-field label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: normal;
-}
-
+.checkbox-field label,
 .radio-group label {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
     font-weight: normal;
+    margin-bottom: 8px;
+}
+
+.radio-group label:last-child {
+    margin-bottom: 0;
 }
 
 .image-upload-container {
@@ -515,5 +514,6 @@ $total_doors = $settings['columns'] * $settings['rows'];
     padding: 8px 12px;
     border-radius: 3px;
     font-size: 13px;
+    word-break: break-all;
 }
 </style>

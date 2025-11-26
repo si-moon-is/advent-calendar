@@ -19,7 +19,22 @@
     z-index: -1;
 }
 
-.advent-calendar.door {
+.advent-calendar.theme-christmas {
+    background: linear-gradient(135deg, #c41e3a 0%, #165b33 100%);
+    border: 3px solid #ffd700;
+}
+
+.advent-calendar.theme-winter {
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    border: 3px solid #dfe6e9;
+}
+
+.advent-calendar.theme-elegant {
+    background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+    border: 3px solid #fd79a8;
+}
+
+.advent-calendar-door {
     position: relative;
     aspect-ratio: 1;
     border-radius: 10px;
@@ -36,7 +51,7 @@
     transform-style: preserve-3d;
 }
 
-.advent-calendar.door::before {
+.advent-calendar-door::before {
     content: '';
     position: absolute;
     top: 0;
@@ -47,28 +62,34 @@
     z-index: 1;
 }
 
-.advent-calendar.door:hover {
+.advent-calendar-door.available {
+    background: #c41e3a;
+    cursor: pointer;
+}
+
+.advent-calendar-door.available:hover {
     transform: translateY(-5px) scale(1.05);
     box-shadow: 0 12px 20px rgba(0,0,0,0.2);
 }
 
-.advent-calendar.door.locked {
+.advent-calendar-door.locked {
+    background: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
     filter: grayscale(0.5);
 }
 
-.advent-calendar.door.locked:hover {
+.advent-calendar-door.locked:hover {
     transform: none;
     box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
-.advent-calendar.door.open {
-    transform: rotateY(180deg);
+.advent-calendar-door.open {
+    background: #28a745;
     cursor: default;
 }
 
-.advent-calendar.door .door-number {
+.advent-calendar-door .door-number {
     position: absolute;
     top: 8px;
     left: 8px;
@@ -83,30 +104,13 @@
     z-index: 2;
 }
 
-.advent-calendar.door .door-content {
+.advent-calendar-door .door-content {
     transform: rotateY(180deg);
     padding: 15px;
     text-align: center;
     width: 100%;
 }
 
-/* Motywy */
-.advent-calendar.theme-christmas {
-    background: linear-gradient(135deg, #c41e3a 0%, #165b33 100%);
-    border: 3px solid #ffd700;
-}
-
-.advent-calendar.theme-winter {
-    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-    border: 3px solid #dfe6e9;
-}
-
-.advent-calendar.theme-elegant {
-    background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
-    border: 3px solid #fd79a8;
-}
-
-/* Modal */
 .advent-modal {
     display: none;
     position: fixed;
@@ -187,30 +191,12 @@
     text-align: center;
 }
 
-.door-content {
+.door-content-text {
     font-size: 1.1em;
     line-height: 1.6;
     color: #333;
 }
 
-/* Responsywność */
-@media (max-width: 768px) {
-    .advent-calendar {
-        gap: 10px;
-        padding: 15px;
-    }
-    
-    .advent-calendar.door {
-        font-size: 1.2em;
-    }
-    
-    .advent-modal-content {
-        padding: 25px;
-        margin: 20px;
-    }
-}
-
-/* Statystyki */
 .calendar-stats {
     background: white;
     border-radius: 10px;
@@ -243,4 +229,24 @@
 .stat-label {
     font-size: 1.1em;
     opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .advent-calendar {
+        gap: 10px;
+        padding: 15px;
+    }
+    
+    .advent-calendar-door {
+        font-size: 1.2em;
+    }
+    
+    .advent-modal-content {
+        padding: 25px;
+        margin: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
 }

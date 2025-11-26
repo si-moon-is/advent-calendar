@@ -4,7 +4,7 @@
  * Plugin URI: https://twoja-strona.pl
  * Description: Dodaj piękny, interaktywny kalendarz adwentowy na swojej stronie WordPress
  * Version: 1.0.0
- * Author: Twoje Imię
+ * Author: Szymon Koscikiewicz
  * License: GPL v2 or later
  * Text Domain: advent-calendar
  */

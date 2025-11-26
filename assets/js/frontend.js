@@ -44,6 +44,7 @@ jQuery(document).ready(function($) {
                     action: 'open_door',
                     door_id: doorId,
                     calendar_id: calendarId,
+                    user_session: userSession, // DODAJ TĘ LINIĘ
                     nonce: adventCalendar.nonce
                 },
                 success: (response) => {

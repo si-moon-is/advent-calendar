@@ -66,10 +66,24 @@ class Advent_Calendar {
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
-        dbDelta($sql2);
-        dbDelta($sql3);
-        dbDelta($sql4);
+        
+        $result1 = dbDelta($sql);
+        $result2 = dbDelta($sql2);
+        $result3 = dbDelta($sql3);
+        $result4 = dbDelta($sql4);
+        
+        error_log('ADVENT CALENDAR DEBUG: Table creation started');
+        error_log('ADVENT CALENDAR DEBUG: Calendars table result: ' . print_r($result1, true));
+        error_log('ADVENT CALENDAR DEBUG: Doors table result: ' . print_r($result2, true));
+        error_log('ADVENT CALENDAR DEBUG: Stats table result: ' . print_r($result3, true));
+        error_log('ADVENT CALENDAR DEBUG: Styles table result: ' . print_r($result4, true));
+        
+        // Sprawdź czy tabele zostały utworzone
+        $tables = array($table_name, $doors_table, $stats_table, $styles_table);
+        foreach ($tables as $table) {
+            $exists = $wpdb->get_var("SHOW TABLES LIKE '$table'") == $table;
+            error_log("ADVENT CALENDAR DEBUG: Table $table exists: " . ($exists ? 'YES' : 'NO'));
+        }
         
         return true;
     }
@@ -103,6 +117,17 @@ class Advent_Calendar {
     public static function save_calendar($data) {
         global $wpdb;
         
+        error_log('ADVENT CALENDAR DEBUG: save_calendar called with data: ' . print_r($data, true));
+        
+        // Sprawdź czy tabela istnieje
+        $table_name = $wpdb->prefix . 'advent_calendars';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name;
+        
+        if (!$table_exists) {
+            error_log('ADVENT CALENDAR ERROR: Table does not exist: ' . $table_name);
+            return false;
+        }
+        
         $defaults = array(
             'title' => 'Nowy Kalendarz',
             'settings' => array(),
@@ -111,30 +136,70 @@ class Advent_Calendar {
         
         $data = wp_parse_args($data, $defaults);
         
+        // Walidacja
+        if (empty($data['title'])) {
+            error_log('ADVENT CALENDAR ERROR: Title is empty');
+            return false;
+        }
+        
+        // Przygotuj settings JSON
+        $settings_json = json_encode($data['settings']);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('ADVENT CALENDAR ERROR: JSON encode error: ' . json_last_error_msg());
+            return false;
+        }
+        
         if (isset($data['id'])) {
+            // Update existing calendar
+            error_log('ADVENT CALENDAR DEBUG: Updating calendar ID: ' . $data['id']);
+            
             $result = $wpdb->update(
                 $wpdb->prefix . 'advent_calendars',
                 array(
                     'title' => $data['title'],
-                    'settings' => json_encode($data['settings']),
+                    'settings' => $settings_json,
                     'updated_at' => current_time('mysql')
                 ),
                 array('id' => $data['id']),
                 array('%s', '%s', '%s'),
                 array('%d')
             );
-            return $result !== false ? $data['id'] : false;
+            
+            error_log('ADVENT CALENDAR DEBUG: Update result: ' . var_export($result, true));
+            error_log('ADVENT CALENDAR DEBUG: Last error: ' . $wpdb->last_error);
+            error_log('ADVENT CALENDAR DEBUG: Last query: ' . $wpdb->last_query);
+            
+            if ($result === false) {
+                error_log('ADVENT CALENDAR ERROR: Update failed');
+                return false;
+            }
+            
+            return $data['id'];
         } else {
+            // Insert new calendar
+            error_log('ADVENT CALENDAR DEBUG: Inserting new calendar');
+            
             $result = $wpdb->insert(
                 $wpdb->prefix . 'advent_calendars',
                 array(
                     'title' => $data['title'],
-                    'settings' => json_encode($data['settings']),
+                    'settings' => $settings_json,
                     'created_at' => $data['created_at']
                 ),
                 array('%s', '%s', '%s')
             );
-            return $result ? $wpdb->insert_id : false;
+            
+            error_log('ADVENT CALENDAR DEBUG: Insert result: ' . var_export($result, true));
+            error_log('ADVENT CALENDAR DEBUG: Insert ID: ' . $wpdb->insert_id);
+            error_log('ADVENT CALENDAR DEBUG: Last error: ' . $wpdb->last_error);
+            error_log('ADVENT CALENDAR DEBUG: Last query: ' . $wpdb->last_query);
+            
+            if ($result === false) {
+                error_log('ADVENT CALENDAR ERROR: Insert failed');
+                return false;
+            }
+            
+            return $wpdb->insert_id;
         }
     }
     

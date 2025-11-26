@@ -72,15 +72,6 @@ class Advent_Calendar {
         dbDelta($sql3);
         dbDelta($sql4);
         
-        // Sprawdź czy tabele zostały utworzone poprawnie
-        $tables = array($table_name, $doors_table, $stats_table, $styles_table);
-        foreach ($tables as $table) {
-            if ($wpdb->get_var("SHOW TABLES LIKE '$table'") != $table) {
-                error_log("Advent Calendar: Failed to create table $table");
-                return false;
-            }
-        }
-        
         return true;
     }
     
@@ -122,7 +113,6 @@ class Advent_Calendar {
         $data = wp_parse_args($data, $defaults);
         
         if (isset($data['id'])) {
-            // Update existing
             $result = $wpdb->update(
                 $wpdb->prefix . 'advent_calendars',
                 array(
@@ -136,7 +126,6 @@ class Advent_Calendar {
             );
             return $result !== false ? $data['id'] : false;
         } else {
-            // Insert new
             $result = $wpdb->insert(
                 $wpdb->prefix . 'advent_calendars',
                 array(
@@ -171,7 +160,6 @@ class Advent_Calendar {
         $data = wp_parse_args($data, $defaults);
         
         if (isset($data['id'])) {
-            // Update existing
             $result = $wpdb->update(
                 $wpdb->prefix . 'advent_calendar_doors',
                 array(
@@ -191,7 +179,6 @@ class Advent_Calendar {
             );
             return $result !== false ? $data['id'] : false;
         } else {
-            // Insert new
             $result = $wpdb->insert(
                 $wpdb->prefix . 'advent_calendar_doors',
                 array(
@@ -226,7 +213,6 @@ class Advent_Calendar {
     public static function log_door_open($door_id, $calendar_id) {
         global $wpdb;
         
-        // Zwiększ licznik otwarć
         $wpdb->query($wpdb->prepare(
             "UPDATE {$wpdb->prefix}advent_calendar_doors 
              SET open_count = open_count + 1, is_open = 1 
@@ -234,7 +220,6 @@ class Advent_Calendar {
             $door_id
         ));
         
-        // Zapisz statystyki
         $result = $wpdb->insert(
             $wpdb->prefix . 'advent_calendar_stats',
             array(
@@ -263,12 +248,12 @@ class Advent_Calendar {
     public static function delete_calendar($id) {
         global $wpdb;
         
-        $result1 = $wpdb->delete($wpdb->prefix . 'advent_calendars', array('id' => $id), array('%d'));
-        $result2 = $wpdb->delete($wpdb->prefix . 'advent_calendar_doors', array('calendar_id' => $id), array('%d'));
-        $result3 = $wpdb->delete($wpdb->prefix . 'advent_calendar_stats', array('calendar_id' => $id), array('%d'));
-        $result4 = $wpdb->delete($wpdb->prefix . 'advent_calendar_styles', array('calendar_id' => $id), array('%d'));
+        $result = $wpdb->delete($wpdb->prefix . 'advent_calendars', array('id' => $id), array('%d'));
+        $wpdb->delete($wpdb->prefix . 'advent_calendar_doors', array('calendar_id' => $id), array('%d'));
+        $wpdb->delete($wpdb->prefix . 'advent_calendar_stats', array('calendar_id' => $id), array('%d'));
+        $wpdb->delete($wpdb->prefix . 'advent_calendar_styles', array('calendar_id' => $id), array('%d'));
         
-        return $result1 !== false;
+        return $result !== false;
     }
     
     public static function get_door_by_calendar_and_number($calendar_id, $door_number) {

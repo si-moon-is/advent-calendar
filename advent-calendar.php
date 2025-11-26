@@ -9,23 +9,22 @@
  * Text Domain: advent-calendar
  */
 
-// Zabezpieczenie przed bezpośrednim dostępem
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// Definicje stałych
 define('ADVENT_CALENDAR_VERSION', '2.0.3');
 define('ADVENT_CALENDAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('ADVENT_CALENDAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
-// Ładujemy zależności
 require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar.php';
 require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-admin.php';
 require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-frontend.php';
 require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-ajax.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-export-import.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-statistics.php';
+require_once ADVENT_CALENDAR_PLUGIN_PATH . 'includes/class-advent-calendar-styles.php';
 
-// Główna klasa wtyczki
 class Advent_Calendar_Plugin {
     
     private static $instance = null;
@@ -46,15 +45,17 @@ class Advent_Calendar_Plugin {
     public function init() {
         load_plugin_textdomain('advent-calendar', false, dirname(plugin_basename(__FILE__)) . '/languages');
         
-        // Inicjalizacja komponentów
         if (is_admin()) {
             new Advent_Calendar_Admin();
+        } else {
+            new Advent_Calendar_Frontend();
         }
         
-        new Advent_Calendar_Frontend();
         new Advent_Calendar_Ajax();
+        new Advent_Calendar_Export_Import();
+        new Advent_Calendar_Statistics();
+        new Advent_Calendar_Styles();
         
-        // Shortcode
         add_shortcode('advent_calendar', array($this, 'calendar_shortcode'));
     }
     
@@ -85,6 +86,5 @@ class Advent_Calendar_Plugin {
     }
 }
 
-// Inicjalizacja
 Advent_Calendar_Plugin::get_instance();
 ?>

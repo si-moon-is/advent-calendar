@@ -1,252 +1,349 @@
+/* Advent Calendar Frontend Styles */
 .advent-calendar {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.advent-calendar.doors-grid {
     display: grid;
     gap: 15px;
-    margin: 30px 0;
-    padding: 30px;
-    border-radius: 15px;
-    position: relative;
-    overflow: hidden;
+    justify-content: center;
 }
 
-.advent-calendar::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255,255,255,0.1);
-    z-index: -1;
+/* Domyślny grid - 6 kolumn */
+.advent-calendar[data-columns="6"] .doors-grid {
+    grid-template-columns: repeat(6, 1fr);
 }
 
-.advent-calendar.theme-christmas {
-    background: linear-gradient(135deg, #c41e3a 0%, #165b33 100%);
-    border: 3px solid #ffd700;
+.advent-calendar[data-columns="5"] .doors-grid {
+    grid-template-columns: repeat(5, 1fr);
 }
 
-.advent-calendar.theme-winter {
-    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-    border: 3px solid #dfe6e9;
+.advent-calendar[data-columns="4"] .doors-grid {
+    grid-template-columns: repeat(4, 1fr);
 }
 
-.advent-calendar.theme-elegant {
-    background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
-    border: 3px solid #fd79a8;
+.advent-calendar[data-columns="3"] .doors-grid {
+    grid-template-columns: repeat(3, 1fr);
 }
 
+.advent-calendar[data-columns="7"] .doors-grid {
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.advent-calendar[data-columns="8"] .doors-grid {
+    grid-template-columns: repeat(8, 1fr);
+}
+
+/* Responsywność */
+@media (max-width: 1200px) {
+    .advent-calendar[data-columns="8"] .doors-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .advent-calendar[data-columns="7"] .doors-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .advent-calendar[data-columns="6"] .doors-grid,
+    .advent-calendar[data-columns="5"] .doors-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .advent-calendar[data-columns="8"] .doors-grid,
+    .advent-calendar[data-columns="7"] .doors-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .advent-calendar[data-columns="6"] .doors-grid,
+    .advent-calendar[data-columns="5"] .doors-grid,
+    .advent-calendar[data-columns="4"] .doors-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .advent-calendar[data-columns="8"] .doors-grid,
+    .advent-calendar[data-columns="7"] .doors-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .advent-calendar .doors-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* Style drzwi */
 .advent-calendar-door {
-    position: relative;
     aspect-ratio: 1;
+    background: linear-gradient(145deg, #d4af37, #ffd700);
+    border: 3px solid #b8860b;
     border-radius: 10px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     font-weight: bold;
     font-size: 1.5em;
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    overflow: hidden;
-    transform-style: preserve-3d;
+    color: #8b4513;
+    text-decoration: none;
 }
 
-.advent-calendar-door::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%);
-    z-index: 1;
-}
-
-.advent-calendar-door.available {
-    background: #c41e3a;
-    cursor: pointer;
-}
-
-.advent-calendar-door.available:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.2);
+.advent-calendar-door:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    background: linear-gradient(145deg, #ffd700, #ffec8b);
 }
 
 .advent-calendar-door.locked {
-    background: #6c757d;
+    background: linear-gradient(145deg, #cccccc, #999999);
+    border-color: #666666;
+    color: #666666;
     cursor: not-allowed;
-    opacity: 0.6;
-    filter: grayscale(0.5);
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .advent-calendar-door.locked:hover {
     transform: none;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .advent-calendar-door.open {
-    background: #28a745;
-    cursor: default;
+    background: linear-gradient(145deg, #90ee90, #32cd32);
+    border-color: #228b22;
+    color: #006400;
 }
 
-.advent-calendar-door .door-number {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    font-size: 0.9em;
-    background: rgba(0,0,0,0.3);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.advent-calendar-door.loading {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+/* Numer drzwi */
+.door-number {
+    font-size: 1.2em;
+    font-weight: bold;
     z-index: 2;
 }
 
-.advent-calendar-door .door-content {
-    transform: rotateY(180deg);
-    padding: 15px;
-    text-align: center;
-    width: 100%;
+/* Animacje */
+.door-animation-fade {
+    animation: doorFade 0.6s ease;
 }
 
+.door-animation-slide {
+    animation: doorSlide 0.6s ease;
+}
+
+.door-animation-zoom {
+    animation: doorZoom 0.6s ease;
+}
+
+.door-animation-flip {
+    animation: doorFlip 0.6s ease;
+}
+
+@keyframes doorFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes doorSlide {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes doorZoom {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes doorFlip {
+    from { transform: rotateY(90deg); opacity: 0; }
+    to { transform: rotateY(0deg); opacity: 1; }
+}
+
+/* Modal */
 .advent-modal {
-    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.9);
-    z-index: 99999;
+    background: rgba(0,0,0,0.8);
+    display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(5px);
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
 }
 
 .advent-modal.active {
-    display: flex;
-    animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    opacity: 1;
+    visibility: visible;
 }
 
 .advent-modal-content {
     background: white;
-    padding: 40px;
-    border-radius: 20px;
-    max-width: 600px;
-    width: 90%;
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
     position: relative;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    animation: modalContentSlideIn 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    transform: scale(0.7);
+    transition: transform 0.3s ease;
 }
 
-@keyframes modalContentSlideIn {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+.advent-modal.active .advent-modal-content {
+    transform: scale(1);
 }
 
 .advent-modal-close {
     position: absolute;
     top: 15px;
-    right: 20px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #666;
-    transition: color 0.3s ease;
+    right: 15px;
     background: none;
     border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
     width: 30px;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
 }
 
 .advent-modal-close:hover {
-    color: #000;
-}
-
-.door-image {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.door-image img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 10px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-}
-
-.door-title {
-    font-size: 2em;
-    margin-bottom: 15px;
-    color: #c41e3a;
-    text-align: center;
-}
-
-.door-content-text {
-    font-size: 1.1em;
-    line-height: 1.6;
+    background: #f0f0f0;
     color: #333;
 }
 
-.calendar-stats {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+body.modal-open {
+    overflow: hidden;
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+/* Efekty */
+.confetti-container,
+.snow-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
 }
 
-.stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.snowflake {
+    position: absolute;
+    animation: snowFall linear forwards;
+    pointer-events: none;
+}
+
+@keyframes snowFall {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.sparkle {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    background: gold;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    animation: sparklePop 2s ease-out forwards;
+}
+
+@keyframes sparklePop {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+/* Błędy */
+.advent-calendar-error {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #dc3545;
     color: white;
-    padding: 25px;
-    border-radius: 10px;
-    text-align: center;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 10001;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-.stat-number {
-    font-size: 2.5em;
-    font-weight: bold;
-    margin-bottom: 10px;
+/* Tematy */
+.advent-theme-christmas .advent-calendar-door {
+    background: linear-gradient(145deg, #d4af37, #ffd700);
+    border-color: #b8860b;
 }
 
-.stat-label {
-    font-size: 1.1em;
-    opacity: 0.9;
+.advent-theme-winter .advent-calendar-door {
+    background: linear-gradient(145deg, #e6f3ff, #b3d9ff);
+    border-color: #6699cc;
+    color: #336699;
 }
 
-@media (max-width: 768px) {
-    .advent-calendar {
-        gap: 10px;
-        padding: 15px;
-    }
-    
-    .advent-calendar-door {
-        font-size: 1.2em;
-    }
-    
-    .advent-modal-content {
-        padding: 25px;
-        margin: 20px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
+.advent-theme-modern .advent-calendar-door {
+    background: linear-gradient(145deg, #667eea, #764ba2);
+    border-color: #5a6fbe;
+    color: white;
+}
+
+.advent-theme-classic .advent-calendar-door {
+    background: linear-gradient(145deg, #8b4513, #a0522d);
+    border-color: #654321;
+    color: #ffd700;
 }

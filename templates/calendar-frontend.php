@@ -4,17 +4,18 @@ if (!defined('ABSPATH')) {
 }
 
 $settings = json_decode($calendar->settings, true);
-$columns = $atts['columns'] ?? $settings['columns'] ?? 6;
-$theme = $atts['theme'] ?? $settings['theme'] ?? 'christmas';
+$columns = $settings['columns'] ?? 6; // UŻYJ USTAWIEŃ Z KALENDARZA
+$rows = $settings['rows'] ?? 4; // UŻYJ USTAWIEŃ Z KALENDARZA
+$theme = $settings['theme'] ?? 'christmas';
+$total_doors = $columns * $rows; // TERAZ BĘDZIE 6×4=24
 ?>
 
-<div class="advent-calendar advent-theme-<?php echo esc_attr($settings['theme'] ?? 'christmas'); ?>" 
+<div class="advent-calendar advent-theme-<?php echo esc_attr($theme); ?>" 
      data-calendar-id="<?php echo $calendar_id; ?>" 
      data-settings="<?php echo esc_attr(json_encode($settings)); ?>"
      style="display: grid; grid-template-columns: repeat(<?php echo $columns; ?>, 1fr); gap: 15px; margin: 30px 0; padding: 30px;">
     
     <?php 
-    $total_doors = $columns * ($settings['rows'] ?? 4);
     for ($i = 1; $i <= $total_doors; $i++): 
         $door = null;
         foreach ($doors as $d) {
@@ -31,7 +32,7 @@ $theme = $atts['theme'] ?? $settings['theme'] ?? 'christmas';
         
         <div class="advent-calendar-door door <?php echo $door_class; ?>" 
              data-door-id="<?php echo $door ? $door->id : ''; ?>"
-             data-calendar-id="<?php echo $atts['id']; ?>">
+             data-calendar-id="<?php echo $calendar_id; ?>">
             
             <span class="door-number"><?php echo $i; ?></span>
             

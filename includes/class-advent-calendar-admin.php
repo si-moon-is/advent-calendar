@@ -84,20 +84,23 @@ class Advent_Calendar_Admin {
     }
     
     public function ajax_save_calendar() {
-        if (!wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce')) {
+        // Sprawdź nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce')) {
             wp_send_json_error('Błąd bezpieczeństwa (nonce)');
         }
         
+        // Sprawdź uprawnienia
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Brak uprawnień');
         }
         
+        // Sprawdź wymagane pola
         if (empty($_POST['title'])) {
             wp_send_json_error('Nazwa kalendarza jest wymagana');
         }
         
+        // Przygotuj dane
         $data = array(
-            'id' => isset($_POST['id']) ? intval($_POST['id']) : null,
             'title' => sanitize_text_field($_POST['title']),
             'settings' => array(
                 'columns' => isset($_POST['columns']) ? intval($_POST['columns']) : 6,
@@ -112,16 +115,28 @@ class Advent_Calendar_Admin {
             )
         );
         
+        // Sprawdź czy to aktualizacja czy nowy kalendarz
+        if (isset($_POST['id']) && !empty($_POST['id'])) {
+            $data['id'] = intval($_POST['id']);
+        }
+        
+        // Zapisz kalendarz
         $calendar_id = Advent_Calendar::save_calendar($data);
         
         if ($calendar_id) {
-            wp_send_json_success(array(
+            $response = array(
                 'id' => $calendar_id,
-                'message' => 'Kalendarz zapisany pomyślnie!',
-                'redirect' => !isset($_POST['id']) ? admin_url('admin.php?page=advent-calendar-new&calendar_id=' . $calendar_id) : false
-            ));
+                'message' => 'Kalendarz zapisany pomyślnie!'
+            );
+            
+            // Jeśli to nowy kalendarz, dodaj przekierowanie
+            if (!isset($_POST['id'])) {
+                $response['redirect'] = admin_url('admin.php?page=advent-calendar-new&calendar_id=' . $calendar_id);
+            }
+            
+            wp_send_json_success($response);
         } else {
-            wp_send_json_error('Błąd podczas zapisywania kalendarza');
+            wp_send_json_error('Błąd podczas zapisywania kalendarza. Sprawdź czy wszystkie wymagane pola są wypełnione.');
         }
     }
     
@@ -158,7 +173,6 @@ class Advent_Calendar_Admin {
         }
         
         $data = array(
-            'id' => isset($_POST['door_id']) && !empty($_POST['door_id']) ? intval($_POST['door_id']) : null,
             'calendar_id' => intval($_POST['calendar_id']),
             'door_number' => intval($_POST['door_number']),
             'title' => sanitize_text_field($_POST['title'] ?? ''),
@@ -171,6 +185,10 @@ class Advent_Calendar_Admin {
             'custom_css' => sanitize_textarea_field($_POST['custom_css'] ?? ''),
             'unlock_date' => sanitize_text_field($_POST['unlock_date'] ?? '')
         );
+        
+        if (isset($_POST['door_id']) && !empty($_POST['door_id'])) {
+            $data['id'] = intval($_POST['door_id']);
+        }
         
         $door_id = Advent_Calendar::save_door($data);
         

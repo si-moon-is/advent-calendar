@@ -3,11 +3,20 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Pobierz calendar_id z atrybutów shortcode
+$calendar_id = intval($atts['id']);
+$calendar = Advent_Calendar::get_calendar($calendar_id);
+$doors = Advent_Calendar::get_calendar_doors($calendar_id);
+
+if (!$calendar) {
+    return 'Kalendarz nie znaleziony';
+}
+
 $settings = json_decode($calendar->settings, true);
-$columns = $settings['columns'] ?? 6; // UŻYJ USTAWIEŃ Z KALENDARZA
-$rows = $settings['rows'] ?? 4; // UŻYJ USTAWIEŃ Z KALENDARZA
+$columns = $settings['columns'] ?? 6;
+$rows = $settings['rows'] ?? 4;
 $theme = $settings['theme'] ?? 'christmas';
-$total_doors = $columns * $rows; // TERAZ BĘDZIE 6×4=24
+$total_doors = $columns * $rows;
 ?>
 
 <div class="advent-calendar advent-theme-<?php echo esc_attr($theme); ?>" 
@@ -31,7 +40,7 @@ $total_doors = $columns * $rows; // TERAZ BĘDZIE 6×4=24
     ?>
         
         <div class="advent-calendar-door door <?php echo $door_class; ?>" 
-             data-door-id="<?php echo $door ? $door->id : ''; ?>"
+             data-door-id="<?php echo $door ? $door->id : '0'; ?>"
              data-calendar-id="<?php echo $calendar_id; ?>">
             
             <span class="door-number"><?php echo $i; ?></span>
@@ -53,10 +62,6 @@ $total_doors = $columns * $rows; // TERAZ BĘDZIE 6×4=24
 
 <style>
 .advent-calendar {
-    display: grid;
-    gap: 15px;
-    margin: 30px 0;
-    padding: 30px;
     border-radius: 15px;
     position: relative;
     overflow: hidden;
@@ -219,6 +224,7 @@ $total_doors = $columns * $rows; // TERAZ BĘDZIE 6×4=24
     .advent-calendar {
         gap: 10px;
         padding: 15px;
+        grid-template-columns: repeat(3, 1fr) !important;
     }
     
     .advent-calendar-door {
@@ -228,6 +234,12 @@ $total_doors = $columns * $rows; // TERAZ BĘDZIE 6×4=24
     .advent-modal-content {
         padding: 25px;
         margin: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .advent-calendar {
+        grid-template-columns: repeat(2, 1fr) !important;
     }
 }
 </style>

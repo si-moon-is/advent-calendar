@@ -1,5 +1,4 @@
 <?php
-
 class Advent_Calendar_Styles {
     
     public static function get_calendar_styles($calendar_id) {
@@ -91,36 +90,8 @@ class Advent_Calendar_Styles {
                     'text' => '#ffffff'
                 ),
                 'custom_css' => '.advent-calendar.theme-winter { border: 3px solid #dfe6e9; }'
-            ),
-            'elegant' => array(
-                'name' => 'Elegancki',
-                'colors' => array(
-                    'primary' => '#2d3436',
-                    'secondary' => '#636e72',
-                    'accent' => '#fd79a8',
-                    'text' => '#ffffff'
-                ),
-                'custom_css' => '.advent-calendar.theme-elegant { border: 3px solid #fd79a8; }'
             )
         );
-    }
-    
-    public static function apply_style_preset($calendar_id, $preset_key) {
-        $presets = self::get_style_presets();
-        
-        if (isset($presets[$preset_key])) {
-            $preset = $presets[$preset_key];
-            
-            return self::save_style(array(
-                'calendar_id' => $calendar_id,
-                'style_name' => $preset['name'],
-                'styles_data' => $preset['colors'],
-                'custom_css' => $preset['custom_css'],
-                'is_default' => 1
-            ));
-        }
-        
-        return false;
     }
 }
 ?>

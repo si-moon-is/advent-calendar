@@ -181,7 +181,7 @@ class Advent_Calendar_Admin {
             'link_url' => esc_url_raw($_POST['link_url']),
             'door_type' => sanitize_text_field($_POST['door_type']),
             'animation' => sanitize_text_field($_POST['animation']),
-            'styles' => array(), // Możesz rozszerzyć o style w przyszłości
+            'styles' => array(),
             'custom_css' => sanitize_textarea_field($_POST['custom_css']),
             'unlock_date' => sanitize_text_field($_POST['unlock_date'])
         );

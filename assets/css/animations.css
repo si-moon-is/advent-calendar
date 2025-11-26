@@ -1,40 +1,85 @@
-/* Animacje otwierania */
+/* Animacje otwierania drzwi */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes slideIn {
+@keyframes slideInUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInDown {
     from { transform: translateY(-50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes zoomIn {
-    from { transform: scale(0.5); opacity: 0; }
+    from { transform: scale(0.3); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
 
-@keyframes flip {
-    from { transform: rotateY(0); }
-    to { transform: rotateY(180deg); }
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
-.door-animation-fade { animation: fadeIn 0.5s ease; }
-.door-animation-slide { animation: slideIn 0.5s ease; }
-.door-animation-zoom { animation: zoomIn 0.5s ease; }
-.door-animation-flip { animation: flip 0.6s ease; }
+@keyframes flipInY {
+    from { transform: perspective(400px) rotateY(90deg); opacity: 0; }
+    to { transform: perspective(400px) rotateY(0); opacity: 1; }
+}
 
-/* Efekt konfetti */
-.confetti {
+@keyframes rotateIn {
+    from { transform: rotate(-180deg) scale(0.3); opacity: 0; }
+    to { transform: rotate(0) scale(1); opacity: 1; }
+}
+
+@keyframes lightSpeedIn {
+    from { transform: translateX(100%) skewX(-30deg); opacity: 0; }
+    60% { transform: skewX(20deg); opacity: 1; }
+    80% { transform: skewX(-5deg); }
+    to { transform: translateX(0) skewX(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Klasy animacji */
+.door-animation-fade { animation: fadeIn 0.6s ease; }
+.door-animation-slide-up { animation: slideInUp 0.6s ease; }
+.door-animation-slide-down { animation: slideInDown 0.6s ease; }
+.door-animation-zoom { animation: zoomIn 0.6s ease; }
+.door-animation-bounce { animation: bounceIn 0.8s ease; }
+.door-animation-flip { animation: flipInY 0.8s ease; }
+.door-animation-rotate { animation: rotateIn 0.8s ease; }
+.door-animation-lightspeed { animation: lightSpeedIn 0.8s ease; }
+.door-animation-pulse { animation: pulse 0.8s ease; }
+
+/* Efekty specjalne */
+.confetti-container {
     position: fixed;
-    width: 10px;
-    height: 10px;
-    background: #ff0000;
-    opacity: 0.8;
-    animation: fall linear forwards;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999999;
 }
 
-@keyframes fall {
+.confetti {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    opacity: 0.8;
+    animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
     to {
         transform: translateY(100vh) rotate(360deg);
         opacity: 0;
@@ -42,12 +87,22 @@
 }
 
 /* Padający śnieg */
-.snow {
+.snow-container {
     position: fixed;
-    top: -10px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999998;
+}
+
+.snowflake {
+    position: absolute;
     color: white;
-    font-size: 20px;
+    font-size: 24px;
     animation: snowfall linear infinite;
+    user-select: none;
 }
 
 @keyframes snowfall {
@@ -55,4 +110,84 @@
         transform: translateY(100vh) rotate(360deg);
         opacity: 0;
     }
+}
+
+/* Efekt iskier */
+.sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: gold;
+    border-radius: 50%;
+    animation: sparkleTwinkle 1.5s ease-in-out infinite;
+}
+
+@keyframes sparkleTwinkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+/* Animacja gwiazdek */
+.star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    border-radius: 50%;
+    animation: starTwinkle 2s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Loading animation */
+.door-loading {
+    position: relative;
+}
+
+.door-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Hover effects */
+.door-glow:hover {
+    box-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.door-shake:hover {
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Success animation */
+.door-success {
+    animation: successPulse 2s ease;
+}
+
+@keyframes successPulse {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
 }

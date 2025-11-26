@@ -45,7 +45,7 @@ class Advent_Calendar_Ajax {
         
         wp_send_json_success(array(
             'content' => $this->get_door_display_content($door),
-            'animation' => $door->animation,
+            'animation' => $door->animation ?: ($settings['default_animation'] ?? 'fade'),
             'effects' => $effects,
             'door_type' => $door->door_type,
             'link_url' => $door->link_url
@@ -81,7 +81,7 @@ class Advent_Calendar_Ajax {
         }
         
         if ($door->content) {
-            $content .= '<div class="door-content">' . wp_kses_post($door->content) . '</div>';
+            $content .= '<div class="door-content-text">' . wp_kses_post($door->content) . '</div>';
         }
         
         return $content;

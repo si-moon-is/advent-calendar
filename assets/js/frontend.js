@@ -8,7 +8,7 @@ jQuery(document).ready(function($) {
         },
         
         bindEvents: function() {
-            $('.advent-calendar.door:not(.locked)').on('click', this.openDoor.bind(this));
+            $('.advent-calendar-door.available').on('click', this.openDoor.bind(this));
             $(document).on('click', '.advent-modal-close, .advent-modal', this.closeModal.bind(this));
         },
         
@@ -51,17 +51,14 @@ jQuery(document).ready(function($) {
         },
         
         handleDoorOpenSuccess: function(door, data) {
-            // Dodaj animację otwarcia
             door.addClass('open door-animation-' + data.animation);
             
-            // Odtwórz efekty specjalne
             if (data.effects && data.effects.length) {
                 data.effects.forEach(effect => {
                     this.playEffect(effect);
                 });
             }
             
-            // Pokaż zawartość
             setTimeout(() => {
                 if (data.door_type === 'modal') {
                     this.showModal(data.content);
@@ -71,7 +68,6 @@ jQuery(document).ready(function($) {
                     this.showInlineContent(door, data.content);
                 }
                 
-                // Oznacz jako sukces
                 door.addClass('door-success');
             }, 600);
         },
@@ -120,11 +116,56 @@ jQuery(document).ready(function($) {
         },
         
         createConfetti: function() {
-            // ... istniejący kod confetti ...
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            const container = $('<div class="confetti-container"></div>');
+            $('body').append(container);
+            
+            for (let i = 0; i < 150; i++) {
+                const confetti = $('<div class="confetti"></div>');
+                confetti.css({
+                    left: Math.random() * 100 + 'vw',
+                    background: colors[Math.floor(Math.random() * colors.length)],
+                    animationDuration: (Math.random() * 3 + 2) + 's',
+                    width: (Math.random() * 10 + 5) + 'px',
+                    height: (Math.random() * 10 + 5) + 'px'
+                });
+                
+                container.append(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+            
+            setTimeout(() => {
+                container.remove();
+            }, 5000);
         },
         
         createSnow: function() {
-            // ... istniejący kod snow ...
+            const container = $('<div class="snow-container"></div>');
+            const snowflakes = ['❄', '❅', '❆'];
+            $('body').append(container);
+            
+            for (let i = 0; i < 50; i++) {
+                const snow = $('<div class="snowflake"></div>');
+                snow.text(snowflakes[Math.floor(Math.random() * snowflakes.length)]);
+                snow.css({
+                    left: Math.random() * 100 + 'vw',
+                    animationDuration: (Math.random() * 5 + 5) + 's',
+                    fontSize: (Math.random() * 10 + 15) + 'px'
+                });
+                
+                container.append(snow);
+                
+                setTimeout(() => {
+                    snow.remove();
+                }, 10000);
+            }
+            
+            setTimeout(() => {
+                container.remove();
+            }, 10000);
         },
         
         createSparkles: function() {
@@ -157,11 +198,10 @@ jQuery(document).ready(function($) {
         },
         
         checkOpenedDoors: function() {
-            $('.advent-calendar.door.open').each(function() {
+            $('.advent-calendar-door.open').each(function() {
                 const door = $(this);
                 const doorId = door.data('door-id');
                 
-                // Załaduj zawartość dla już otwartych drzwi
                 $.ajax({
                     url: adventCalendar.ajaxurl,
                     type: 'POST',

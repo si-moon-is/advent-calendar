@@ -134,7 +134,7 @@ jQuery(document).ready(function($) {
                     } else {
                         this.showMessage(response.data, 'error');
                     }
-                }.bind(this),
+                },
                 error: () => {
                     this.showMessage('Błąd podczas usuwania', 'error');
                 }

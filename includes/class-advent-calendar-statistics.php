@@ -1,5 +1,4 @@
 <?php
-
 class Advent_Calendar_Statistics {
     
     public function __construct() {

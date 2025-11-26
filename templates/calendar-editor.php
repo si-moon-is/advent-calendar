@@ -6,6 +6,11 @@ if (!defined('ABSPATH')) {
 $calendar_id = isset($_GET['calendar_id']) ? intval($_GET['calendar_id']) : 0;
 $calendar = $calendar_id ? Advent_Calendar::get_calendar($calendar_id) : null;
 
+if (!$calendar && $calendar_id) {
+    echo '<div class="error"><p>Kalendarz nie znaleziony.</p></div>';
+    return;
+}
+
 $settings = $calendar ? json_decode($calendar->settings, true) : array(
     'columns' => 6,
     'rows' => 4,
@@ -31,10 +36,11 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
         <button type="button" class="advent-tab active" data-tab="settings">Ustawienia</button>
         <?php if ($calendar): ?>
             <button type="button" class="advent-tab" data-tab="doors">Edytor Drzwi</button>
+            <button type="button" class="advent-tab" data-tab="styles">Style</button>
+            <button type="button" class="advent-tab" data-tab="statistics">Statystyki</button>
         <?php endif; ?>
     </div>
     
-    <!-- Tab: Ustawienia -->
     <div id="settings" class="tab-content active">
         <div class="form-container">
             <input type="hidden" id="calendar-id" value="<?php echo $calendar_id; ?>">
@@ -77,6 +83,7 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                 <select id="calendar-theme" class="form-control">
                     <option value="christmas" <?php selected($settings['theme'] ?? 'christmas', 'christmas'); ?>>Świąteczny</option>
                     <option value="winter" <?php selected($settings['theme'] ?? 'christmas', 'winter'); ?>>Zimowy</option>
+                    <option value="elegant" <?php selected($settings['theme'] ?? 'christmas', 'elegant'); ?>>Elegancki</option>
                 </select>
             </div>
             
@@ -86,6 +93,7 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                     <option value="fade" <?php selected($settings['default_animation'] ?? 'fade', 'fade'); ?>>Fade</option>
                     <option value="slide-up" <?php selected($settings['default_animation'] ?? 'fade', 'slide-up'); ?>>Slide Up</option>
                     <option value="zoom" <?php selected($settings['default_animation'] ?? 'fade', 'zoom'); ?>>Zoom</option>
+                    <option value="bounce" <?php selected($settings['default_animation'] ?? 'fade', 'bounce'); ?>>Bounce</option>
                 </select>
             </div>
             
@@ -118,7 +126,6 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
         </div>
     </div>
     
-    <!-- Tab: Edytor Drzwi -->
     <?php if ($calendar): ?>
     <div id="doors" class="tab-content">
         <div class="door-editor-grid">
@@ -164,6 +171,7 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                     <div style="display: flex; gap: 20px;">
                         <label><input type="radio" name="door_type" value="modal" checked> Modal</label>
                         <label><input type="radio" name="door_type" value="link"> Link</label>
+                        <label><input type="radio" name="door_type" value="inline"> Bezpośrednio</label>
                     </div>
                 </div>
                 
@@ -175,6 +183,7 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                 <div class="form-group" id="door-content-field">
                     <label for="door-content">Zawartość</label>
                     <textarea id="door-content" class="form-control" rows="6" placeholder="Treść, która pojawi się po otwarciu drzwi..."></textarea>
+                    <p class="description">Możesz używać HTML i shortcodów WordPress</p>
                 </div>
                 
                 <div class="form-group">
@@ -183,6 +192,9 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                         <option value="fade">Fade</option>
                         <option value="slide-up">Slide Up</option>
                         <option value="zoom">Zoom</option>
+                        <option value="bounce">Bounce</option>
+                        <option value="flip">Flip</option>
+                        <option value="rotate">Rotate</option>
                     </select>
                 </div>
                 
@@ -191,10 +203,74 @@ $doors = $calendar ? Advent_Calendar::get_calendar_doors($calendar_id) : array()
                     <input type="date" id="door-unlock-date" class="form-control">
                 </div>
                 
+                <div class="form-group">
+                    <label for="door-custom-css">Niestandardowy CSS</label>
+                    <textarea id="door-custom-css" class="form-control" rows="5" placeholder="Dodatkowe style CSS dla tych drzwi"></textarea>
+                </div>
+                
                 <div style="display: flex; gap: 10px;">
                     <button type="button" id="save-door" class="btn btn-primary">Zapisz Drzwi</button>
                     <button type="button" id="cancel-door" class="btn btn-secondary">Anuluj</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="styles" class="tab-content">
+        <div class="style-editor-preview">
+            <h3>Podgląd Kalendarza</h3>
+            <div style="display: grid; grid-template-columns: repeat(<?php echo $settings['columns'] ?? 6; ?>, 1fr); gap: 10px; margin: 20px 0;">
+                <?php for ($i = 1; $i <= $total_doors; $i++): ?>
+                    <div style="aspect-ratio: 1; background: #c41e3a; color: white; display: flex; align-items: center; justify-content: center; border-radius: 5px; font-weight: bold;">
+                        <?php echo $i; ?>
+                    </div>
+                <?php endfor; ?>
+            </div>
+        </div>
+        
+        <div class="color-picker-group">
+            <div class="color-picker-item">
+                <label>Kolor główny</label>
+                <input type="text" class="color-picker" value="#c41e3a">
+            </div>
+            <div class="color-picker-item">
+                <label>Kolor drugoplanowy</label>
+                <input type="text" class="color-picker" value="#165b33">
+            </div>
+            <div class="color-picker-item">
+                <label>Kolor akcentowy</label>
+                <input type="text" class="color-picker" value="#ffd700">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="custom-css">Niestandardowy CSS</label>
+            <textarea id="custom-css" class="form-control" rows="10" placeholder="Dodaj własne style CSS"></textarea>
+        </div>
+        
+        <button type="button" id="save-styles" class="btn btn-primary">Zapisz Style</button>
+    </div>
+    
+    <div id="statistics" class="tab-content">
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">0</div>
+                <div class="stat-label">Łączne otwarcia</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">0</div>
+                <div class="stat-label">Unikalni użytkownicy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">0</div>
+                <div class="stat-label">Najpopularniejsze drzwi</div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <h3>Statystyki szczegółowe</h3>
+            <div id="stats-chart" style="height: 300px; margin: 20px 0;">
+                <p style="text-align: center; color: #666; padding: 50px;">Wczytywanie statystyk...</p>
             </div>
         </div>
     </div>

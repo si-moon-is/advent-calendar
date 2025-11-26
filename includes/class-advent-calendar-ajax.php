@@ -28,6 +28,12 @@ class Advent_Calendar_Ajax {
         if (!Advent_Calendar::can_unlock_door($door->door_number, $settings)) {
             wp_send_json_error('Te drzwi nie są jeszcze dostępne');
         }
+
+        $user_has_opened = Advent_Calendar::has_user_opened_door_with_session($door_id, $user_session);
+    
+        if (!$user_has_opened) {
+            Advent_Calendar::log_door_open_with_session($door_id, $calendar_id, $user_session);
+        }
         
         Advent_Calendar::log_door_open($door_id, $calendar_id);
         

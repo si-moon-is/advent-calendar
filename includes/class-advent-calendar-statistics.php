@@ -6,7 +6,11 @@ class Advent_Calendar_Statistics {
     }
     
     public function get_calendar_stats_ajax() {
-        check_ajax_referer('advent_calendar_admin_nonce', 'nonce');
+        check_ajax_referer('advent_calendar_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Brak uprawnień');
+        }
         
         $calendar_id = intval($_POST['calendar_id']);
         $stats = $this->get_calendar_statistics($calendar_id);
@@ -48,10 +52,10 @@ class Advent_Calendar_Statistics {
         ));
         
         return array(
-            'total_opens' => $total_opens,
-            'unique_visitors' => $unique_visitors,
-            'popular_doors' => $popular_doors,
-            'daily_opens' => $daily_opens
+            'total_opens' => $total_opens ?: 0,
+            'unique_visitors' => $unique_visitors ?: 0,
+            'popular_doors' => $popular_doors ?: array(),
+            'daily_opens' => $daily_opens ?: array()
         );
     }
     

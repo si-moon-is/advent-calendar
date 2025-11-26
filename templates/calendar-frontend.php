@@ -35,8 +35,8 @@ $total_doors = $columns * $rows;
         }
         
         $can_open = $door ? Advent_Calendar::can_unlock_door($door->door_number, $settings) : false;
-        $is_open = $door ? $door->is_open : false;
-        $door_class = $is_open ? 'open' : ($can_open ? 'available' : 'locked');
+        $user_has_opened = $door ? Advent_Calendar::has_user_opened_door($door->id) : false;
+        $door_class = $user_has_opened ? 'open' : ($can_open ? 'available' : 'locked');
     ?>
         
         <div class="advent-calendar-door door <?php echo $door_class; ?>" 

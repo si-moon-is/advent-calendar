@@ -538,3 +538,36 @@ $total_doors = $settings['columns'] * $settings['rows'];
     word-break: break-all;
 }
 </style>
+<script>
+jQuery(document).ready(function($) {
+    // Inicjalizacja podglądu motywów
+    function initThemePreviews() {
+        $('.theme-preview').on('click', function() {
+            const theme = $(this).data('theme');
+            
+            // Update select value
+            $('#calendar-theme').val(theme);
+            
+            // Update active class
+            $('.theme-preview').removeClass('active');
+            $(this).addClass('active');
+            
+            console.log('Theme selected:', theme);
+        });
+        
+        // Handle select change
+        $('#calendar-theme').on('change', function() {
+            const theme = $(this).val();
+            $('.theme-preview').removeClass('active');
+            $(`.theme-preview[data-theme="${theme}"]`).addClass('active');
+        });
+        
+        // Initialize active state
+        const currentTheme = $('#calendar-theme').val();
+        $(`.theme-preview[data-theme="${currentTheme}"]`).addClass('active');
+    }
+    
+    // Initialize when document is ready
+    initThemePreviews();
+});
+</script>

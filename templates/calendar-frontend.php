@@ -39,7 +39,7 @@ $total_doors = $columns * $rows;
         $door_class = $user_has_opened ? 'open' : ($can_open ? 'available' : 'locked');
     ?>
         
-        <div class="advent-calendar-door door <?php echo $door_class; ?>" 
+        <div class="advent-calendar-door door <?php echo $door_class; ?> door-<?php echo $i; ?>" 
              data-door-id="<?php echo $door ? $door->id : '0'; ?>"
              data-calendar-id="<?php echo $calendar_id; ?>"
              data-door-number="<?php echo $i; ?>">
@@ -55,14 +55,14 @@ $total_doors = $columns * $rows;
                     <?php endif; ?>
                 </div>
             <?php else: ?>
-                <!-- Domyślny obrazek świąteczny -->
+                <!-- Domyślny wygląd z gradientami i emoji -->
                 <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?> 
                      <?php echo $settings['theme'] === 'christmas' ? 'christmas-default' : ''; ?>">
                      
                     <?php if ($user_has_opened): ?>
                         <span class="door-icon">🎁</span>
                     <?php else: ?>
-                        <!-- Domyślny obrazek dla zamkniętych drzwi -->
+                        <!-- Gradient + emoji -->
                         <div class="default-christmas-image door-<?php echo $i; ?>"></div>
                         <span class="door-number-default"><?php echo $i; ?></span>
                     <?php endif; ?>
@@ -112,7 +112,6 @@ $total_doors = $columns * $rows;
 }
 
 .advent-calendar-door.available {
-    background: #c41e3a;
     cursor: pointer;
 }
 
@@ -122,15 +121,39 @@ $total_doors = $columns * $rows;
 }
 
 .advent-calendar-door.locked {
-    background: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
 }
 
 .advent-calendar-door.open {
-    background: #28a745;
     cursor: default;
 }
+
+/* Gradienty dla każdego drzwi */
+.door-1 { background: linear-gradient(135deg, #c41e3a, #8b0000); }
+.door-2 { background: linear-gradient(135deg, #165b33, #0d3d21); }
+.door-3 { background: linear-gradient(135deg, #ffd700, #b8860b); }
+.door-4 { background: linear-gradient(135deg, #1e3a8a, #1e40af); }
+.door-5 { background: linear-gradient(135deg, #7e22ce, #6b21a8); }
+.door-6 { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+.door-7 { background: linear-gradient(135deg, #059669, #047857); }
+.door-8 { background: linear-gradient(135deg, #d97706, #b45309); }
+.door-9 { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.door-10 { background: linear-gradient(135deg, #db2777, #be185d); }
+.door-11 { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+.door-12 { background: linear-gradient(135deg, #84cc16, #65a30d); }
+.door-13 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.door-14 { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.door-15 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.door-16 { background: linear-gradient(135deg, #ec4899, #db2777); }
+.door-17 { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+.door-18 { background: linear-gradient(135deg, #f97316, #ea580c); }
+.door-19 { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.door-20 { background: linear-gradient(135deg, #10b981, #059669); }
+.door-21 { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+.door-22 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.door-23 { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.door-24 { background: linear-gradient(135deg, #84cc16, #65a30d); }
 
 .advent-calendar-door .door-number {
     position: absolute;
@@ -184,44 +207,51 @@ $total_doors = $columns * $rows;
     filter: brightness(1);
 }
 
-/* Domyślne obrazki świąteczne */
+/* Domyślne obrazki z emoji */
 .default-christmas-image {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Obrazki z Twojego katalogu */
-.door-1 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-1.jpg'); }
-.door-2 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-2.jpg'); }
-.door-3 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-3.jpg'); }
-.door-4 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-4.jpg'); }
-.door-5 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-5.jpg'); }
-.door-6 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-6.jpg'); }
-.door-7 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-7.jpg'); }
-.door-8 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-8.jpg'); }
-.door-9 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-9.jpg'); }
-.door-10 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-10.jpg'); }
-.door-11 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-11.jpg'); }
-.door-12 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-12.jpg'); }
-.door-13 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-13.jpg'); }
-.door-14 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-14.jpg'); }
-.door-15 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-15.jpg'); }
-.door-16 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-16.jpg'); }
-.door-17 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-17.jpg'); }
-.door-18 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-18.jpg'); }
-.door-19 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-19.jpg'); }
-.door-20 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-20.jpg'); }
-.door-21 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-21.jpg'); }
-.door-22 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-22.jpg'); }
-.door-23 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-23.jpg'); }
-.door-24 { background-image: url('<?php echo ADVENT_CALENDAR_PLUGIN_URL; ?>assets/images/doors/door-24.jpg'); }
+/* Emoji dla każdego drzwi */
+.door-1 .default-christmas-image::before { content: "1️⃣️"; }
+.door-2 .default-christmas-image::before { content: "2️⃣️"; }
+.door-3 .default-christmas-image::before { content: "3️⃣️"; }
+.door-4 .default-christmas-image::before { content: "4️⃣️"; }
+.door-5 .default-christmas-image::before { content: "5️⃣️"; }
+.door-6 .default-christmas-image::before { content: "6️⃣️"; }
+.door-7 .default-christmas-image::before { content: "7️⃣️"; }
+.door-8 .default-christmas-image::before { content: "8️⃣️"; }
+.door-9 .default-christmas-image::before { content: "9️⃣️"; }
+.door-10 .default-christmas-image::before { content: "🔟"; }
+.door-11 .default-christmas-image::before { content: "1️⃣️1️⃣️"; }
+.door-12 .default-christmas-image::before { content: "1️⃣️2️⃣️"; }
+.door-13 .default-christmas-image::before { content: "1️⃣️3️⃣️"; }
+.door-14 .default-christmas-image::before { content: "1️⃣️4️⃣️"; }
+.door-15 .default-christmas-image::before { content: "1️⃣️5️⃣️"; }
+.door-16 .default-christmas-image::before { content: "1️⃣️6️⃣️"; }
+.door-17 .default-christmas-image::before { content: "1️⃣️7️⃣️"; }
+.door-18 .default-christmas-image::before { content: "1️⃣️8️⃣️"; }
+.door-19 .default-christmas-image::before { content: "1️⃣️9️⃣️"; }
+.door-20 .default-christmas-image::before { content: "2️⃣️0️⃣️"; }
+.door-21 .default-christmas-image::before { content: "2️⃣️1️⃣️"; }
+.door-22 .default-christmas-image::before { content: "2️⃣️2️⃣️"; }
+.door-23 .default-christmas-image::before { content: "2️⃣️3️⃣️"; }
+.door-24 .default-christmas-image::before { content: "2️⃣️4️⃣️"; }
+
+.default-christmas-image::before {
+    font-size: 2.5em;
+    color: gold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    font-weight: bold;
+    z-index: 2;
+}
 
 .door-number-default {
     position: absolute;
@@ -249,11 +279,12 @@ $total_doors = $columns * $rows;
 }
 
 .door-default-content.closed {
-    background: linear-gradient(145deg, #d4af37, #ffd700);
+    border: 3px solid gold;
 }
 
 .door-default-content.opened {
     background: linear-gradient(145deg, #90ee90, #32cd32);
+    border: 3px solid #228b22;
 }
 
 .door-icon {
@@ -342,6 +373,10 @@ $total_doors = $columns * $rows;
         font-size: 1.2em;
     }
     
+    .default-christmas-image::before {
+        font-size: 2em;
+    }
+    
     .advent-modal-content {
         padding: 25px;
         margin: 20px;
@@ -351,6 +386,10 @@ $total_doors = $columns * $rows;
 @media (max-width: 480px) {
     .advent-calendar {
         grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .default-christmas-image::before {
+        font-size: 1.8em;
     }
 }
 </style>

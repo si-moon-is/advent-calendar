@@ -349,6 +349,7 @@ $total_doors = $columns * $rows;
     border-radius: 10px;
 }
 
+ /*   
 .door-title {
     font-size: 2em;
     margin-bottom: 15px;
@@ -361,7 +362,7 @@ $total_doors = $columns * $rows;
     line-height: 1.6;
     color: #333;
 }
-
+*/
 @media (max-width: 768px) {
     .advent-calendar {
         gap: 10px;

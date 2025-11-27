@@ -45,20 +45,18 @@ $total_doors = $columns * $rows;
     
     <span class="door-number"><?php echo $i; ?></span>
     
-    <?php if ($user_has_opened && $door && $door->image_url): ?>
-        <div class="door-content">
+    <?php if ($door && $door->image_url): ?>
+        <!-- Obrazek zawsze widoczny -->
+        <div class="door-image-container <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
             <img src="<?php echo esc_url($door->image_url); ?>" alt="Door <?php echo $i; ?>" class="door-main-image">
-        </div>
-    <?php elseif ($user_has_opened && $door): ?>
-        <div class="door-content">
-            <div class="door-default-content">
-                <span class="door-icon">🎁</span>
-            </div>
+            <?php if (!$user_has_opened): ?>
+                <div class="door-overlay"></div>
+            <?php endif; ?>
         </div>
     <?php else: ?>
-        <!-- Domyślny wygląd zamkniętych drzwi -->
-        <div class="door-default-closed">
-            <span class="door-number-closed"><?php echo $i; ?></span>
+        <!-- Domyślny wygląd bez obrazka -->
+        <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
+            <span class="door-icon"><?php echo $user_has_opened ? '🎁' : $i; ?></span>
         </div>
     <?php endif; ?>
 </div>

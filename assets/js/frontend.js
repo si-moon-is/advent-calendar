@@ -7,8 +7,8 @@ jQuery(document).ready(function($) {
         init: function() {
             console.log('Initializing Advent Calendar...');
             this.bindEvents();
-            this.checkLocalStorageDoors();
             this.initializeUserSession();
+            this.checkLocalStorageDoors(); // DODAJ TE LINIĘ - musi być PO initializeUserSession
         },
         
         bindEvents: function() {
@@ -33,6 +33,45 @@ jQuery(document).ready(function($) {
             return userSession;
         },
         
+        checkLocalStorageDoors: function() {
+            const userSession = localStorage.getItem('advent_calendar_session');
+            if (!userSession) {
+                console.log('No user session found, skipping door check');
+                return;
+            }
+            
+            const openedDoors = JSON.parse(localStorage.getItem('advent_opened_doors') || '{}');
+            const userOpenedDoors = openedDoors[userSession] || [];
+            
+            console.log('Found opened doors in localStorage:', userOpenedDoors);
+            
+            // DODAJ TIMEOUT aby upewnić się że DOM jest w pełni załadowany
+            setTimeout(() => {
+                userOpenedDoors.forEach(doorId => {
+                    const $door = $('.advent-calendar-door[data-door-id="' + doorId + '"]');
+                    if ($door.length && !$door.hasClass('open')) {
+                        console.log('Marking door as opened from localStorage:', doorId);
+                        $door.removeClass('available locked').addClass('open');
+                        
+                        // POPRAWKA: Od razu aktualizuj wizualnie drzwi bez ładowania zawartości
+                        this.updateDoorVisualState($door);
+                    }
+                });
+            }, 100);
+        },
+
+        // DODAJ NOWĄ METODĘ do aktualizacji stanu wizualnego
+        updateDoorVisualState: function($door) {
+            if ($door.find('.door-image-container').length) {
+                $door.find('.door-image-container').removeClass('closed').addClass('opened');
+                $door.find('.door-overlay').remove();
+            } else if ($door.find('.door-default-content').length) {
+                $door.find('.door-default-content').removeClass('closed').addClass('opened');
+                $door.find('.door-icon').text('🎁');
+            }
+        },
+        
+        // POZOSTAŁE METODY bez zmian...
         setCookie: function(name, value, days) {
             const date = new Date();
             date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -119,13 +158,7 @@ jQuery(document).ready(function($) {
             console.log('Showing door content:', data);
             
             // Update door visual state
-            if (door.find('.door-image-container').length) {
-                door.find('.door-image-container').removeClass('closed').addClass('opened');
-                door.find('.door-overlay').remove();
-            } else if (door.find('.door-default-content').length) {
-                door.find('.door-default-content').removeClass('closed').addClass('opened');
-                door.find('.door-icon').text('🎁');
-            }
+            this.updateDoorVisualState(door);
             
             // Handle different door types
             if (data.door_type === 'modal') {
@@ -221,60 +254,6 @@ jQuery(document).ready(function($) {
                 openedDoors[userSession].push(doorId);
                 localStorage.setItem('advent_opened_doors', JSON.stringify(openedDoors));
             }
-        },
-
-        checkLocalStorageDoors: function() {
-            const userSession = localStorage.getItem('advent_calendar_session');
-            if (!userSession) return;
-            
-            const openedDoors = JSON.parse(localStorage.getItem('advent_opened_doors') || '{}');
-            const userOpenedDoors = openedDoors[userSession] || [];
-            
-            console.log('Found opened doors in localStorage:', userOpenedDoors);
-            
-            userOpenedDoors.forEach(doorId => {
-                const $door = $('.advent-calendar-door[data-door-id="' + doorId + '"]');
-                if ($door.length && !$door.hasClass('open')) {
-                    console.log('Marking door as opened from localStorage:', doorId);
-                    $door.removeClass('available locked').addClass('open');
-                    this.loadDoorContent(doorId, $door);
-                }
-            });
-        },
-
-        loadDoorContent: function(doorId, $door) {
-            $.ajax({
-                url: adventCalendar.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'get_door_content',
-                    door_id: doorId,
-                    nonce: adventCalendar.nonce
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.showDoorContent($door, response.data);
-                    } else {
-                        console.error('Error loading door content:', response.data);
-                    }
-                },
-                error: (xhr, status, error) => {
-                    console.error('AJAX Error loading door content:', error);
-                }
-            });
-        },
-
-        handleDoorOpenError: function(door, error) {
-            console.error('Door open error:', error);
-            let message = 'Wystąpił błąd podczas otwierania drzwi.';
-            
-            if (typeof error === 'string') {
-                message = error;
-            } else if (error && error.message) {
-                message = error.message;
-            }
-            
-            this.showError(message);
         },
 
         playEffect: function(effect) {
@@ -392,17 +371,6 @@ jQuery(document).ready(function($) {
                 "'": '&#039;'
             };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-        },
-
-        // Utility function to check if element is in viewport
-        isInViewport: function(element) {
-            const rect = element.getBoundingClientRect();
-            return (
-                rect.top >= 0 &&
-                rect.left >= 0 &&
-                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-            );
         }
     };
     

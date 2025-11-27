@@ -257,6 +257,65 @@ class Advent_Calendar {
         }
     }
 
+    public static function can_unlock_door($door_number, $calendar_settings) {
+        $current_date = current_time('Y-m-d');
+        $start_date = $calendar_settings['start_date'] ?? date('Y-12-01');
+        
+        // Walidacja daty rozpoczęcia
+        if (!strtotime($start_date)) {
+            $start_date = date('Y-12-01');
+        }
+        
+        // Oblicz datę odblokowania dla konkretnych drzwi
+        $door_date = date('Y-m-d', strtotime($start_date . ' + ' . ($door_number - 1) . ' days'));
+        
+        // Sprawdź czy obecna data jest równa lub późniejsza od daty odblokowania
+        return $current_date >= $door_date;
+    }
+    
+    public static function has_user_opened_door_with_session($door_id, $user_session) {
+        global $wpdb;
+        
+        $opened = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
+             WHERE door_id = %d AND user_session = %s",
+            $door_id, $user_session
+        ));
+        
+        return $opened > 0;
+    }
+
+    /**
+     * Zapisuje otwarcie drzwi z konkretną sesją
+     */
+    public static function log_door_open_with_session($door_id, $calendar_id, $user_session) {
+        global $wpdb;
+        
+        // Zwiększ globalny licznik
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->prefix}advent_calendar_doors 
+             SET open_count = open_count + 1 
+             WHERE id = %d",
+            $door_id
+        ));
+        
+        // Zapisz otwarcie dla tego użytkownika
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'advent_calendar_stats',
+            array(
+                'calendar_id' => $calendar_id,
+                'door_id' => $door_id,
+                'user_ip' => self::get_user_ip(),
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+                'user_session' => $user_session,
+                'opened_at' => current_time('mysql')
+            ),
+            array('%d', '%d', '%s', '%s', '%s', '%s')
+        );
+        
+        return $result ? $wpdb->insert_id : false;
+    }
+
     private static function get_user_ip() {
         $ip = '';
         

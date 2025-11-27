@@ -4,25 +4,34 @@ if (!defined('ABSPATH')) {
 }
 
 // Pobierz calendar_id z atrybutów shortcode
-$calendar_id = intval($atts['id']);
-$calendar = Advent_Calendar::get_calendar($calendar_id);
-$doors = Advent_Calendar::get_calendar_doors($calendar_id);
+$calendar_id = isset($atts['id']) ? intval($atts['id']) : 0;
+$calendar = $calendar_id ? Advent_Calendar::get_calendar($calendar_id) : null;
 
 if (!$calendar) {
-    return 'Kalendarz nie znaleziony';
+    return '<p>Kalendarz nie znaleziony</p>';
 }
 
+$doors = Advent_Calendar::get_calendar_doors($calendar_id);
 $settings = json_decode($calendar->settings, true);
-$columns = $settings['columns'] ?? 6;
-$rows = $settings['rows'] ?? 4;
-$theme = $settings['theme'] ?? 'christmas';
+$columns = isset($settings['columns']) ? intval($settings['columns']) : 6;
+$rows = isset($settings['rows']) ? intval($settings['rows']) : 4;
+$theme = isset($settings['theme']) ? sanitize_text_field($settings['theme']) : 'christmas';
 $total_doors = $columns * $rows;
+
+// Bezpieczne ustawienia domyślne
+$safe_settings = wp_parse_args($settings, array(
+    'columns' => 6,
+    'rows' => 4,
+    'start_date' => date('Y-12-01'),
+    'end_date' => date('Y-12-24'),
+    'theme' => 'christmas'
+));
 ?>
 
 <div class="advent-calendar advent-theme-<?php echo esc_attr($theme); ?>" 
-     data-calendar-id="<?php echo $calendar_id; ?>" 
-     data-settings="<?php echo esc_attr(json_encode($settings)); ?>"
-     style="display: grid; grid-template-columns: repeat(<?php echo $columns; ?>, 1fr); gap: 15px; margin: 30px 0; padding: 30px;">
+     data-calendar-id="<?php echo esc_attr($calendar_id); ?>" 
+     data-columns="<?php echo esc_attr($columns); ?>"
+     style="display: grid; grid-template-columns: repeat(<?php echo esc_attr($columns); ?>, 1fr); gap: 15px; margin: 30px 0; padding: 30px;">
     
     <?php 
     for ($i = 1; $i <= $total_doors; $i++): 
@@ -34,22 +43,23 @@ $total_doors = $columns * $rows;
             }
         }
         
-        $can_open = $door ? Advent_Calendar::can_unlock_door($door->door_number, $settings) : false;
+        $can_open = $door ? Advent_Calendar::can_unlock_door($door->door_number, $safe_settings) : false;
         $user_has_opened = $door ? Advent_Calendar::has_user_opened_door($door->id) : false;
         $door_class = $user_has_opened ? 'open' : ($can_open ? 'available' : 'locked');
+        $door_id = $door ? intval($door->id) : 0;
     ?>
         
-        <div class="advent-calendar-door door <?php echo $door_class; ?> door-<?php echo $i; ?>" 
-             data-door-id="<?php echo $door ? $door->id : '0'; ?>"
-             data-calendar-id="<?php echo $calendar_id; ?>"
-             data-door-number="<?php echo $i; ?>">
+        <div class="advent-calendar-door door <?php echo esc_attr($door_class); ?> door-<?php echo intval($i); ?>" 
+             data-door-id="<?php echo esc_attr($door_id); ?>"
+             data-calendar-id="<?php echo esc_attr($calendar_id); ?>"
+             data-door-number="<?php echo intval($i); ?>">
     
-            <span class="door-number"><?php echo $i; ?></span>
+            <span class="door-number"><?php echo intval($i); ?></span>
     
-            <?php if ($door && $door->image_url): ?>
+            <?php if ($door && !empty($door->image_url)): ?>
                 <!-- Obrazek z bazy -->
                 <div class="door-image-container <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
-                    <img src="<?php echo esc_url($door->image_url); ?>" alt="Door <?php echo $i; ?>" class="door-main-image">
+                    <img src="<?php echo esc_url($door->image_url); ?>" alt="Door <?php echo intval($i); ?>" class="door-main-image">
                     <?php if (!$user_has_opened): ?>
                         <div class="door-overlay"></div>
                     <?php endif; ?>
@@ -57,14 +67,14 @@ $total_doors = $columns * $rows;
             <?php else: ?>
                 <!-- Domyślny wygląd z gradientami i emoji -->
                 <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?> 
-                     <?php echo $settings['theme'] === 'christmas' ? 'christmas-default' : ''; ?>">
+                     <?php echo esc_attr($safe_settings['theme']) === 'christmas' ? 'christmas-default' : ''; ?>">
                      
                     <?php if ($user_has_opened): ?>
                         <span class="door-icon">🎁</span>
                     <?php else: ?>
                         <!-- Gradient + emoji -->
-                        <div class="default-christmas-image door-<?php echo $i; ?>"></div>
-                        <span class="door-number-default"><?php echo $i; ?></span>
+                        <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
+                        <span class="door-number-default"><?php echo intval($i); ?></span>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -292,77 +302,6 @@ $total_doors = $columns * $rows;
     z-index: 2;
 }
 
-.advent-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.9);
-    z-index: 99999;
-    align-items: center;
-    justify-content: center;
-}
-
-.advent-modal.active {
-    display: flex;
-}
-
-.advent-modal-content {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    max-width: 600px;
-    width: 90%;
-    position: relative;
-}
-
-.advent-modal-close {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #666;
-    background: none;
-    border: none;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.advent-modal-close:hover {
-    color: #000;
-}
-
-.door-image {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.door-image img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 10px;
-}
-
- /*   
-.door-title {
-    font-size: 2em;
-    margin-bottom: 15px;
-    color: #c41e3a;
-    text-align: center;
-}
-
-.door-content-text {
-    font-size: 1.1em;
-    line-height: 1.6;
-    color: #333;
-}
-*/
 @media (max-width: 768px) {
     .advent-calendar {
         gap: 10px;
@@ -376,11 +315,6 @@ $total_doors = $columns * $rows;
     
     .default-christmas-image::before {
         font-size: 2em;
-    }
-    
-    .advent-modal-content {
-        padding: 25px;
-        margin: 20px;
     }
 }
 

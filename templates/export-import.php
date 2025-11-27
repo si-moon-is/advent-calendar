@@ -24,11 +24,17 @@ $calendars = Advent_Calendar::get_calendars();
                 <?php foreach ($calendars as $calendar): ?>
                     <div class="calendar-card">
                         <h3><?php echo esc_html($calendar->title); ?></h3>
-                        <p><strong>Data utworzenia:</strong> <?php echo date('d.m.Y', strtotime($calendar->created_at)); ?></p>
-                        <p><strong>Liczba drzwi:</strong> <?php echo count(Advent_Calendar::get_calendar_doors($calendar->id)); ?></p>
+                        <p><strong>Data utworzenia:</strong> <?php echo esc_html(date('d.m.Y', strtotime($calendar->created_at))); ?></p>
+                        <p><strong>Liczba drzwi:</strong> <?php echo intval(count(Advent_Calendar::get_calendar_doors($calendar->id))); ?></p>
                         
                         <div class="calendar-actions">
-                            <a href="<?php echo admin_url('admin-post.php?action=export_calendar&calendar_id=' . $calendar->id); ?>" 
+                            <?php
+                            $export_url = wp_nonce_url(
+                                admin_url('admin-post.php?action=export_calendar&calendar_id=' . intval($calendar->id)),
+                                'advent_calendar_export'
+                            );
+                            ?>
+                            <a href="<?php echo esc_url($export_url); ?>" 
                                class="btn btn-primary">Eksportuj Kalendarz</a>
                         </div>
                     </div>
@@ -45,18 +51,19 @@ $calendars = Advent_Calendar::get_calendars();
                     <li>Importuj kalendarz z pliku JSON wyeksportowanego z innej instalacji wtyczki</li>
                     <li>Plik powinien mieć rozszerzenie .json</li>
                     <li>Import utworzy nowy kalendarz z zaimportowanymi ustawieniami i drzwiami</li>
+                    <li>Maksymalny rozmiar pliku: 10MB</li>
                 </ul>
             </div>
         </div>
         
-        <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" enctype="multipart/form-data" class="import-form">
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" class="import-form">
             <input type="hidden" name="action" value="import_calendar">
             <?php wp_nonce_field('import_calendar'); ?>
             
             <div class="form-group">
                 <label for="import-file">Plik JSON do zaimportowania</label>
                 <input type="file" id="import-file" class="form-control" name="import_file" accept=".json" required>
-                <p class="description">Wybierz plik .json wyeksportowany z kalendarza adwentowego</p>
+                <p class="description">Wybierz plik .json wyeksportowany z kalendarza adwentowego (max 10MB)</p>
             </div>
             
             <div class="form-group">

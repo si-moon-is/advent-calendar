@@ -2,145 +2,281 @@ jQuery(document).ready(function($) {
     'use strict';
     
     console.log('Advent Calendar Frontend JS loaded!');
-    console.log('adventCalendar object:', adventCalendar); 
-    console.log('ajaxurl:', adventCalendar.ajaxurl);
-    console.log('nonce:', adventCalendar.nonce);
     
     const AdventCalendar = {
         init: function() {
             console.log('Initializing Advent Calendar...');
             this.bindEvents();
-            this.checkOpenedDoors();
             this.checkLocalStorageDoors();
+            this.initializeUserSession();
         },
         
         bindEvents: function() {
-            $('.advent-calendar-door.available').on('click', this.openDoor.bind(this));
+            // Delegated event for better performance
+            $(document).on('click', '.advent-calendar-door.available', this.openDoor.bind(this));
             $(document).on('click', '.advent-modal-close, .advent-modal', this.closeModal.bind(this));
+            
+            // Escape key to close modal
+            $(document).on('keydown', this.handleKeydown.bind(this));
+        },
+        
+        initializeUserSession: function() {
+            // Initialize user session if not exists
+            let userSession = localStorage.getItem('advent_calendar_session');
+            if (!userSession) {
+                userSession = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('advent_calendar_session', userSession);
+                
+                // Save in cookie for PHP compatibility
+                this.setCookie('advent_calendar_user_session', userSession, 365);
+            }
+            return userSession;
+        },
+        
+        setCookie: function(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Strict";
         },
         
         openDoor: function(e) {
-    e.preventDefault();
-    const door = $(e.currentTarget);
-    
-    if (door.hasClass('loading') || door.hasClass('open')) {
-        return;
-    }
-    
-    door.addClass('loading');
-    
-    const doorId = door.data('door-id');
-    const calendarId = door.data('calendar-id');
-    
-    // Pobierz user_session z localStorage LUB utwórz nowy
-    let userSession = localStorage.getItem('advent_calendar_session');
-    if (!userSession) {
-        userSession = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('advent_calendar_session', userSession);
-        
-        // Zapisz też w cookie dla PHP
-        document.cookie = "advent_calendar_user_session=" + userSession + "; max-age=" + (365*24*60*60) + "; path=/";
-    }
-    
-    $.ajax({
-        url: adventCalendar.ajaxurl,
-        type: 'POST',
-        data: {
-            action: 'open_door',
-            door_id: doorId,
-            calendar_id: calendarId,
-            user_session: userSession,
-            nonce: adventCalendar.nonce
-        },
-        success: (response) => {
-            door.removeClass('loading');
+            e.preventDefault();
+            e.stopPropagation();
             
-            if (response.success) {
-                this.handleDoorOpenSuccess(door, response.data);
-                // Oznacz drzwi jako otwarte w localStorage
-                this.markDoorAsOpened(doorId, userSession);
-            } else {
-                this.handleDoorOpenError(door, response.data);
+            const door = $(e.currentTarget);
+            
+            // Prevent multiple clicks
+            if (door.hasClass('loading') || door.hasClass('open')) {
+                return;
+            }
+            
+            door.addClass('loading');
+            
+            const doorId = door.data('door-id');
+            const calendarId = door.data('calendar-id');
+            const userSession = this.initializeUserSession();
+            
+            console.log('Opening door:', doorId, 'Calendar:', calendarId, 'Session:', userSession);
+            
+            $.ajax({
+                url: adventCalendar.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'open_door',
+                    door_id: doorId,
+                    calendar_id: calendarId,
+                    user_session: userSession,
+                    nonce: adventCalendar.nonce
+                },
+                success: (response) => {
+                    console.log('Door open response:', response);
+                    door.removeClass('loading');
+                    
+                    if (response.success) {
+                        this.handleDoorOpenSuccess(door, response.data);
+                        this.markDoorAsOpened(doorId, userSession);
+                    } else {
+                        this.handleDoorOpenError(door, response.data);
+                    }
+                },
+                error: (xhr, status, error) => {
+                    console.error('AJAX Error:', error, xhr);
+                    door.removeClass('loading');
+                    this.showError('Błąd połączenia. Spróbuj ponownie.');
+                }
+            });
+        },
+
+        handleDoorOpenSuccess: function(door, data) {
+            console.log('Handling door open success:', data);
+            
+            // Handle already opened doors
+            if (data.already_opened) {
+                this.showDoorContent(door, data);
+                return;
+            }
+            
+            // Add animation class
+            const animation = data.animation || 'fade';
+            door.addClass('open door-animation-' + animation);
+            
+            // Play effects if available
+            if (data.effects && data.effects.length) {
+                data.effects.forEach(effect => {
+                    this.playEffect(effect);
+                });
+            }
+            
+            // Show content after animation
+            setTimeout(() => {
+                this.showDoorContent(door, data);
+                door.addClass('door-success');
+            }, 600);
+        },
+
+        showDoorContent: function(door, data) {
+            console.log('Showing door content:', data);
+            
+            // Update door visual state
+            if (door.find('.door-image-container').length) {
+                door.find('.door-image-container').removeClass('closed').addClass('opened');
+                door.find('.door-overlay').remove();
+            } else if (door.find('.door-default-content').length) {
+                door.find('.door-default-content').removeClass('closed').addClass('opened');
+                door.find('.door-icon').text('🎁');
+            }
+            
+            // Handle different door types
+            if (data.door_type === 'modal') {
+                this.showModal(data);
+            } else if (data.door_type === 'link' && data.link_url) {
+                this.openExternalLink(data.link_url);
             }
         },
-        error: () => {
-            door.removeClass('loading');
-            this.showError('Błąd połączenia. Spróbuj ponownie.');
-        }
-    });
-},
 
-// Dodaj nową funkcję
-markDoorAsOpened: function(doorId, userSession) {
-    let openedDoors = JSON.parse(localStorage.getItem('advent_opened_doors') || '{}');
-    if (!openedDoors[userSession]) {
-        openedDoors[userSession] = [];
-    }
-    if (!openedDoors[userSession].includes(doorId)) {
-        openedDoors[userSession].push(doorId);
-        localStorage.setItem('advent_opened_doors', JSON.stringify(openedDoors));
-    }
-},
-        
-        handleDoorOpenSuccess: function(door, data) {
-    door.addClass('open door-animation-' + data.animation);
-    
-    if (data.effects && data.effects.length) {
-        data.effects.forEach(effect => {
-            this.playEffect(effect);
-        });
-    }
-    
-    setTimeout(() => {
-        // Usuń przyciemnienie jeśli jest obrazek
-        if (door.find('.door-image-container').length) {
-            door.find('.door-image-container').removeClass('closed').addClass('opened');
-            door.find('.door-overlay').remove();
-        } else if (door.find('.door-default-content').length) {
-            // Dla drzwi bez obrazka
-            door.find('.door-default-content').removeClass('closed').addClass('opened');
-            door.find('.door-icon').text('🎁');
-        }
-        
-        if (data.door_type === 'modal') {
-            this.showModal(data.content);
-        } else if (data.door_type === 'link' && data.link_url) {
-            window.open(data.link_url, '_blank');
-        }
-        
-        door.addClass('door-success');
-    }, 600);
-},
-        
-        handleDoorOpenError: function(door, error) {
-            this.showError(error || 'Wystąpił błąd podczas otwierania drzwi.');
-        },
-        
-        showModal: function(content) {
+        showModal: function(data) {
+            // Create modal structure
             const modal = $(
-                '<div class="advent-modal active">' +
-                '<div class="advent-modal-content">' +
-                '<button class="advent-modal-close">&times;</button>' +
-                '<div class="door-content-wrapper">' + content + '</div>' +
+                '<div class="advent-modal active" tabindex="-1" role="dialog" aria-labelledby="modal-title" aria-hidden="true">' +
+                '<div class="advent-modal-content" role="document">' +
+                '<button class="advent-modal-close" aria-label="Zamknij">&times;</button>' +
+                '<div class="door-content-wrapper"></div>' +
                 '</div>' +
                 '</div>'
             );
             
-            $('body').append(modal);
-            $('body').addClass('modal-open');
+            const contentWrapper = modal.find('.door-content-wrapper');
+            
+            // Add title if available
+            if (data.title) {
+                contentWrapper.append('<h3 id="modal-title" class="door-title">' + this.escapeHtml(data.title) + '</h3>');
+            }
+            
+            // Add image if available
+            if (data.image_url) {
+                contentWrapper.append(
+                    '<div class="door-image">' +
+                    '<img src="' + this.escapeHtml(data.image_url) + '" alt="' + (data.title || 'Door image') + '">' +
+                    '</div>'
+                );
+            }
+            
+            // Add content
+            if (data.content) {
+                contentWrapper.append('<div class="door-content-text">' + data.content + '</div>');
+            }
+            
+            // Add link if available
+            if (data.link_url) {
+                contentWrapper.append(
+                    '<div class="door-actions">' +
+                    '<a href="' + this.escapeHtml(data.link_url) + '" class="btn btn-primary" target="_blank" rel="noopener">Przejdź do strony</a>' +
+                    '</div>'
+                );
+            }
+            
+            $('body').append(modal).addClass('modal-open');
+            
+            // Focus trap for accessibility
+            modal.focus();
+            
+            // Close on background click
+            modal.on('click', (e) => {
+                if (e.target === modal[0]) {
+                    this.closeModal(e);
+                }
+            });
         },
-        
+
+        openExternalLink: function(url) {
+            if (url) {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+        },
+
         closeModal: function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             if ($(e.target).hasClass('advent-modal-close') || $(e.target).hasClass('advent-modal')) {
                 $('.advent-modal').remove();
                 $('body').removeClass('modal-open');
             }
         },
-        
-        showInlineContent: function(door, content) {
-            door.find('.door-content').html(content);
+
+        handleKeydown: function(e) {
+            // Close modal on Escape key
+            if (e.key === 'Escape' && $('.advent-modal').length) {
+                this.closeModal(e);
+            }
         },
-        
+
+        markDoorAsOpened: function(doorId, userSession) {
+            let openedDoors = JSON.parse(localStorage.getItem('advent_opened_doors') || '{}');
+            if (!openedDoors[userSession]) {
+                openedDoors[userSession] = [];
+            }
+            if (!openedDoors[userSession].includes(doorId)) {
+                openedDoors[userSession].push(doorId);
+                localStorage.setItem('advent_opened_doors', JSON.stringify(openedDoors));
+            }
+        },
+
+        checkLocalStorageDoors: function() {
+            const userSession = localStorage.getItem('advent_calendar_session');
+            if (!userSession) return;
+            
+            const openedDoors = JSON.parse(localStorage.getItem('advent_opened_doors') || '{}');
+            const userOpenedDoors = openedDoors[userSession] || [];
+            
+            console.log('Found opened doors in localStorage:', userOpenedDoors);
+            
+            userOpenedDoors.forEach(doorId => {
+                const $door = $('.advent-calendar-door[data-door-id="' + doorId + '"]');
+                if ($door.length && !$door.hasClass('open')) {
+                    console.log('Marking door as opened from localStorage:', doorId);
+                    $door.removeClass('available locked').addClass('open');
+                    this.loadDoorContent(doorId, $door);
+                }
+            });
+        },
+
+        loadDoorContent: function(doorId, $door) {
+            $.ajax({
+                url: adventCalendar.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'get_door_content',
+                    door_id: doorId,
+                    nonce: adventCalendar.nonce
+                },
+                success: (response) => {
+                    if (response.success) {
+                        this.showDoorContent($door, response.data);
+                    } else {
+                        console.error('Error loading door content:', response.data);
+                    }
+                },
+                error: (xhr, status, error) => {
+                    console.error('AJAX Error loading door content:', error);
+                }
+            });
+        },
+
+        handleDoorOpenError: function(door, error) {
+            console.error('Door open error:', error);
+            let message = 'Wystąpił błąd podczas otwierania drzwi.';
+            
+            if (typeof error === 'string') {
+                message = error;
+            } else if (error && error.message) {
+                message = error.message;
+            }
+            
+            this.showError(message);
+        },
+
         playEffect: function(effect) {
             switch(effect) {
                 case 'confetti':
@@ -152,12 +288,14 @@ markDoorAsOpened: function(doorId, userSession) {
                 case 'sparkle':
                     this.createSparkles();
                     break;
+                default:
+                    console.log('Unknown effect:', effect);
             }
         },
         
         createConfetti: function() {
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-            const container = $('<div class="confetti-container"></div>');
+            const container = $('<div class="confetti-container" aria-hidden="true"></div>');
             $('body').append(container);
             
             for (let i = 0; i < 150; i++) {
@@ -183,7 +321,7 @@ markDoorAsOpened: function(doorId, userSession) {
         },
         
         createSnow: function() {
-            const container = $('<div class="snow-container"></div>');
+            const container = $('<div class="snow-container" aria-hidden="true"></div>');
             const snowflakes = ['❄', '❅', '❆'];
             $('body').append(container);
             
@@ -213,7 +351,7 @@ markDoorAsOpened: function(doorId, userSession) {
             const sparkleCount = 30;
             
             for (let i = 0; i < sparkleCount; i++) {
-                const sparkle = $('<div class="sparkle"></div>');
+                const sparkle = $('<div class="sparkle" aria-hidden="true"></div>');
                 sparkle.css({
                     left: Math.random() * 100 + 'vw',
                     top: Math.random() * 100 + 'vh',
@@ -229,70 +367,45 @@ markDoorAsOpened: function(doorId, userSession) {
         },
         
         showError: function(message) {
-            const errorDiv = $('<div class="advent-calendar-error">' + message + '</div>');
+            // Remove existing errors
+            $('.advent-calendar-error').remove();
+            
+            const errorDiv = $(
+                '<div class="advent-calendar-error" role="alert" aria-live="polite">' + 
+                this.escapeHtml(message) + 
+                '</div>'
+            );
+            
             $('body').append(errorDiv);
             
             setTimeout(() => {
                 errorDiv.fadeOut(() => errorDiv.remove());
-            }, 3000);
+            }, 5000);
         },
 
-        checkLocalStorageDoors: function() {
-        const userSession = localStorage.getItem('advent_calendar_session');
-        if (!userSession) return;
-        
-        const openedDoors = JSON.parse(localStorage.getItem('advent_opened_doors') || '{}');
-        const userOpenedDoors = openedDoors[userSession] || [];
-        
-        userOpenedDoors.forEach(doorId => {
-            const $door = $('.advent-calendar-door[data-door-id="' + doorId + '"]');
-            if ($door.length && !$door.hasClass('open')) {
-                $door.removeClass('available locked').addClass('open');
-                // Możesz też załadować zawartość drzwi
-                this.loadDoorContent(doorId, $door);
-            }
-        });
-    },
+        escapeHtml: function(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        },
 
-        loadDoorContent: function(doorId, $door) {
-        $.ajax({
-            url: adventCalendar.ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'get_door_content',
-                door_id: doorId,
-                nonce: adventCalendar.nonce
-            },
-            success: (response) => {
-                if (response.success) {
-                    $door.find('.door-content').html(response.data.content);
-                }
-            }
-        });
-    },
-        
-        checkOpenedDoors: function() {
-            $('.advent-calendar-door.open').each(function() {
-                const door = $(this);
-                const doorId = door.data('door-id');
-                
-                $.ajax({
-                    url: adventCalendar.ajaxurl,
-                    type: 'POST',
-                    data: {
-                        action: 'get_door_content',
-                        door_id: doorId,
-                        nonce: adventCalendar.nonce
-                    },
-                    success: (response) => {
-                        if (response.success) {
-                            door.find('.door-content').html(response.data.content);
-                        }
-                    }
-                });
-            });
+        // Utility function to check if element is in viewport
+        isInViewport: function(element) {
+            const rect = element.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
         }
     };
     
+    // Initialize when DOM is ready
     AdventCalendar.init();
 });

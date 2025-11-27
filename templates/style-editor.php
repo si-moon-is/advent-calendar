@@ -14,6 +14,11 @@ if (!$calendar) {
 $styles = Advent_Calendar_Styles::get_calendar_styles($calendar_id);
 $current_style = $styles ? $styles[0] : null;
 $style_data = $current_style ? json_decode($current_style->styles_data, true) : array();
+
+// Bezpieczne wartości domyślne
+$primary_color = esc_attr($style_data['primary'] ?? '#c41e3a');
+$secondary_color = esc_attr($style_data['secondary'] ?? '#165b33');
+$accent_color = esc_attr($style_data['accent'] ?? '#ffd700');
 ?>
 
 <div class="wrap advent-calendar-admin">
@@ -22,11 +27,23 @@ $style_data = $current_style ? json_decode($current_style->styles_data, true) : 
     <div class="style-editor-container">
         <div class="style-preview-section">
             <h3>Podgląd na żywo</h3>
-            <div class="style-preview-calendar" style="background: linear-gradient(135deg, <?php echo $style_data['primary'] ?? '#c41e3a'; ?> 0%, <?php echo $style_data['secondary'] ?? '#165b33'; ?> 100%); border: 3px solid <?php echo $style_data['accent'] ?? '#ffd700'; ?>; padding: 20px; border-radius: 10px;">
+            <div class="style-preview-calendar" 
+                 style="background: linear-gradient(135deg, <?php echo $primary_color; ?> 0%, <?php echo $secondary_color; ?> 100%); 
+                        border: 3px solid <?php echo $accent_color; ?>; 
+                        padding: 20px; border-radius: 10px;">
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                     <?php for ($i = 1; $i <= 12; $i++): ?>
-                        <div class="style-preview-door" style="aspect-ratio: 1; background: <?php echo $style_data['primary'] ?? '#c41e3a'; ?>; border: 2px solid <?php echo $style_data['accent'] ?? '#ffd700'; ?>; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-                            <?php echo $i; ?>
+                        <div class="style-preview-door" 
+                             style="aspect-ratio: 1; 
+                                    background: <?php echo $primary_color; ?>; 
+                                    border: 2px solid <?php echo $accent_color; ?>; 
+                                    border-radius: 5px; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    color: white; 
+                                    font-weight: bold;">
+                            <?php echo intval($i); ?>
                         </div>
                     <?php endfor; ?>
                 </div>
@@ -54,21 +71,23 @@ $style_data = $current_style ? json_decode($current_style->styles_data, true) : 
             <div class="color-picker-group">
                 <div class="color-picker-item">
                     <label for="primary-color">Kolor główny</label>
-                    <input type="text" id="primary-color" class="color-picker" value="<?php echo $style_data['primary'] ?? '#c41e3a'; ?>">
+                    <input type="text" id="primary-color" class="color-picker" value="<?php echo $primary_color; ?>">
                 </div>
                 <div class="color-picker-item">
                     <label for="secondary-color">Kolor drugoplanowy</label>
-                    <input type="text" id="secondary-color" class="color-picker" value="<?php echo $style_data['secondary'] ?? '#165b33'; ?>">
+                    <input type="text" id="secondary-color" class="color-picker" value="<?php echo $secondary_color; ?>">
                 </div>
                 <div class="color-picker-item">
                     <label for="accent-color">Kolor akcentowy</label>
-                    <input type="text" id="accent-color" class="color-picker" value="<?php echo $style_data['accent'] ?? '#ffd700'; ?>">
+                    <input type="text" id="accent-color" class="color-picker" value="<?php echo $accent_color; ?>">
                 </div>
             </div>
             
             <div class="form-group">
                 <label for="custom-css">Niestandardowy CSS</label>
-                <textarea id="custom-css" class="form-control" rows="10" placeholder="Dodaj własne style CSS..."><?php echo $current_style ? esc_textarea($current_style->custom_css) : ''; ?></textarea>
+                <textarea id="custom-css" class="form-control" rows="10" placeholder="Dodaj własne style CSS..."><?php 
+                    echo $current_style ? esc_textarea($current_style->custom_css) : ''; 
+                ?></textarea>
                 <p class="description">Możesz dodać dodatkowe style CSS, które zostaną zastosowane do tego kalendarza.</p>
             </div>
             
@@ -76,7 +95,7 @@ $style_data = $current_style ? json_decode($current_style->styles_data, true) : 
                 <button type="button" id="save-styles" class="btn btn-primary">Zapisz Style</button>
                 <button type="button" id="apply-preset" class="btn btn-secondary">Zastosuj Preset</button>
                 <button type="button" id="reset-styles" class="btn btn-danger">Resetuj</button>
-                <a href="<?php echo admin_url('admin.php?page=advent-calendar-new&calendar_id=' . $calendar_id); ?>" class="btn btn-secondary">Powrót</a>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=advent-calendar-new&calendar_id=' . $calendar_id)); ?>" class="btn btn-secondary">Powrót</a>
             </div>
         </div>
     </div>

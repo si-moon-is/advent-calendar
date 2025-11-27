@@ -92,19 +92,20 @@ markDoorAsOpened: function(doorId, userSession) {
     }
     
     setTimeout(() => {
-        // Jeśli drzwi mają obrazek, pokaż go
-        if (data.image_url) {
-            const imageHtml = `<div class="door-content"><img src="${data.image_url}" alt="Door content" class="door-main-image"></div>`;
-            door.find('.door-default-closed').remove();
-            door.append(imageHtml);
+        // Usuń przyciemnienie jeśli jest obrazek
+        if (door.find('.door-image-container').length) {
+            door.find('.door-image-container').removeClass('closed').addClass('opened');
+            door.find('.door-overlay').remove();
+        } else if (door.find('.door-default-content').length) {
+            // Dla drzwi bez obrazka
+            door.find('.door-default-content').removeClass('closed').addClass('opened');
+            door.find('.door-icon').text('🎁');
         }
         
         if (data.door_type === 'modal') {
             this.showModal(data.content);
         } else if (data.door_type === 'link' && data.link_url) {
             window.open(data.link_url, '_blank');
-        } else {
-            this.showInlineContent(door, data.content);
         }
         
         door.addClass('door-success');

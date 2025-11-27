@@ -91,35 +91,35 @@ $total_doors = $settings['columns'] * $settings['rows'];
                 </div>
                 
                 <div class="form-field">
-    <label for="calendar-theme">Motyw</label>
-    <div class="theme-preview-container">
-        <select id="calendar-theme" name="theme">
-            <option value="christmas" <?php selected('christmas', $settings['theme']); ?>>Świąteczny</option>
-            <option value="winter" <?php selected('winter', $settings['theme']); ?>>Zimowy</option>
-            <option value="modern" <?php selected('modern', $settings['theme']); ?>>Nowoczesny</option>
-            <option value="classic" <?php selected('classic', $settings['theme']); ?>>Klasyczny</option>
-        </select>
-        
-        <div class="theme-previews">
-            <div class="theme-preview <?php echo $settings['theme'] === 'christmas' ? 'active' : ''; ?>" data-theme="christmas">
-                <div class="preview-image christmas-preview"></div>
-                <span class="preview-label">Świąteczny</span>
-            </div>
-            <div class="theme-preview <?php echo $settings['theme'] === 'winter' ? 'active' : ''; ?>" data-theme="winter">
-                <div class="preview-image winter-preview"></div>
-                <span class="preview-label">Zimowy</span>
-            </div>
-            <div class="theme-preview <?php echo $settings['theme'] === 'modern' ? 'active' : ''; ?>" data-theme="modern">
-                <div class="preview-image modern-preview"></div>
-                <span class="preview-label">Nowoczesny</span>
-            </div>
-            <div class="theme-preview <?php echo $settings['theme'] === 'classic' ? 'active' : ''; ?>" data-theme="classic">
-                <div class="preview-image classic-preview"></div>
-                <span class="preview-label">Klasyczny</span>
-            </div>
-        </div>
-    </div>
-</div>
+                    <label for="calendar-theme">Motyw</label>
+                    <div class="theme-preview-container">
+                        <select id="calendar-theme" name="theme">
+                            <option value="christmas" <?php selected('christmas', $settings['theme']); ?>>Świąteczny</option>
+                            <option value="winter" <?php selected('winter', $settings['theme']); ?>>Zimowy</option>
+                            <option value="modern" <?php selected('modern', $settings['theme']); ?>>Nowoczesny</option>
+                            <option value="classic" <?php selected('classic', $settings['theme']); ?>>Klasyczny</option>
+                        </select>
+                        
+                        <div class="theme-previews">
+                            <div class="theme-preview <?php echo $settings['theme'] === 'christmas' ? 'active' : ''; ?>" data-theme="christmas">
+                                <div class="preview-image christmas-preview"></div>
+                                <span class="preview-label">Świąteczny</span>
+                            </div>
+                            <div class="theme-preview <?php echo $settings['theme'] === 'winter' ? 'active' : ''; ?>" data-theme="winter">
+                                <div class="preview-image winter-preview"></div>
+                                <span class="preview-label">Zimowy</span>
+                            </div>
+                            <div class="theme-preview <?php echo $settings['theme'] === 'modern' ? 'active' : ''; ?>" data-theme="modern">
+                                <div class="preview-image modern-preview"></div>
+                                <span class="preview-label">Nowoczesny</span>
+                            </div>
+                            <div class="theme-preview <?php echo $settings['theme'] === 'classic' ? 'active' : ''; ?>" data-theme="classic">
+                                <div class="preview-image classic-preview"></div>
+                                <span class="preview-label">Klasyczny</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="form-field">
                     <label for="calendar-default-animation">Domyślna animacja</label>
@@ -537,4 +537,102 @@ $total_doors = $settings['columns'] * $settings['rows'];
     font-size: 13px;
     word-break: break-all;
 }
+
+/* Theme Preview Styles */
+.theme-preview-container select {
+    margin-bottom: 15px;
+}
+
+.theme-previews {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.theme-preview {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f9f9f9;
+}
+
+.theme-preview:hover {
+    border-color: #0073aa;
+    transform: translateY(-2px);
+}
+
+.theme-preview.active {
+    border-color: #0073aa;
+    background: #f0f8ff;
+    box-shadow: 0 4px 8px rgba(0, 115, 170, 0.2);
+}
+
+.preview-image {
+    width: 100%;
+    height: 60px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+}
+
+/* Preview colors for each theme */
+.christmas-preview {
+    background: linear-gradient(135deg, #c41e3a 0%, #165b33 50%, #ffd700 100%);
+}
+
+.winter-preview {
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 50%, #dfe6e9 100%);
+}
+
+.modern-preview {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+.classic-preview {
+    background: linear-gradient(135deg, #8b4513 0%, #a0522d 50%, #daa520 100%);
+}
+
+.preview-label {
+    font-weight: 600;
+    color: #333;
+    font-size: 12px;
+}
 </style>
+
+<script>
+jQuery(document).ready(function($) {
+    // Inicjalizacja podglądu motywów
+    function initThemePreviews() {
+        $('.theme-preview').on('click', function() {
+            const theme = $(this).data('theme');
+            
+            // Update select value
+            $('#calendar-theme').val(theme);
+            
+            // Update active class
+            $('.theme-preview').removeClass('active');
+            $(this).addClass('active');
+            
+            console.log('Theme selected:', theme);
+        });
+        
+        // Handle select change
+        $('#calendar-theme').on('change', function() {
+            const theme = $(this).val();
+            $('.theme-preview').removeClass('active');
+            $(`.theme-preview[data-theme="${theme}"]`).addClass('active');
+        });
+        
+        // Initialize active state
+        const currentTheme = $('#calendar-theme').val();
+        $(`.theme-preview[data-theme="${currentTheme}"]`).addClass('active');
+    }
+    
+    // Initialize when document is ready
+    initThemePreviews();
+});
+</script>

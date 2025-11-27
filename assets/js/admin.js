@@ -340,6 +340,36 @@ jQuery(document).ready(function($) {
             }
         },
 
+        // Theme preview functionality
+initThemePreviews: function() {
+    $('.theme-preview').on('click', function() {
+        const theme = $(this).data('theme');
+        
+        // Update select value
+        $('#calendar-theme').val(theme).trigger('change');
+        
+        // Update active class
+        $('.theme-preview').removeClass('active');
+        $(this).addClass('active');
+        
+        // Show preview of the selected theme
+        this.showThemePreview(theme);
+    });
+    
+    // Also handle select change
+    $('#calendar-theme').on('change', function() {
+        const theme = $(this).val();
+        $('.theme-preview').removeClass('active');
+        $(`.theme-preview[data-theme="${theme}"]`).addClass('active');
+    });
+},
+
+showThemePreview: function(theme) {
+    // You can add live preview functionality here
+    console.log('Theme selected:', theme);
+    this.showMessage('Motyw ' + theme + ' został wybrany', 'success');
+},
+
         toggleDoorType: function() {
             const doorType = $('input[name="door_type"]:checked').val();
             

@@ -110,7 +110,7 @@ class Advent_Calendar {
         $table = $wpdb->prefix . 'advent_calendars';
         
         // Check if table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'") == $table;
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table)) == $table;
         if (!$table_exists) {
             error_log('ADVENT CALENDAR ERROR: Table does not exist: ' . $table);
             return false;
@@ -122,15 +122,48 @@ class Advent_Calendar {
             return false;
         }
         
-        // Prepare settings
+        // Prepare settings with validation
         $settings = isset($data['settings']) ? $data['settings'] : array();
-        $settings_json = json_encode($settings);
+        
+        // Sanitize settings
+        $allowed_settings = array(
+            'columns' => 'int',
+            'rows' => 'int', 
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'theme' => 'text',
+            'default_animation' => 'text',
+            'snow_effect' => 'bool',
+            'confetti_effect' => 'bool',
+            'enable_stats' => 'bool'
+        );
+        
+        $sanitized_settings = array();
+        foreach ($allowed_settings as $key => $type) {
+            if (isset($settings[$key])) {
+                switch ($type) {
+                    case 'int':
+                        $sanitized_settings[$key] = intval($settings[$key]);
+                        break;
+                    case 'bool':
+                        $sanitized_settings[$key] = (bool)$settings[$key];
+                        break;
+                    case 'date':
+                        $sanitized_settings[$key] = sanitize_text_field($settings[$key]);
+                        break;
+                    default:
+                        $sanitized_settings[$key] = sanitize_text_field($settings[$key]);
+                }
+            }
+        }
+        
+        $settings_json = json_encode($sanitized_settings);
         if (json_last_error() !== JSON_ERROR_NONE) {
             error_log('ADVENT CALENDAR ERROR: JSON encode failed: ' . json_last_error_msg());
             return false;
         }
         
-        // Prepare data for database
+        // Prepare data for database with validation
         $db_data = array(
             'title' => sanitize_text_field($data['title']),
             'settings' => $settings_json,
@@ -180,7 +213,7 @@ class Advent_Calendar {
             return $wpdb->insert_id;
         }
     }
-    
+
     public static function save_door($data) {
         global $wpdb;
         
@@ -191,6 +224,7 @@ class Advent_Calendar {
             return false;
         }
         
+        // Sanitize and validate input
         $door_data = array(
             'calendar_id' => intval($data['calendar_id']),
             'door_number' => intval($data['door_number']),
@@ -198,7 +232,7 @@ class Advent_Calendar {
             'content' => wp_kses_post($data['content'] ?? ''),
             'image_url' => esc_url_raw($data['image_url'] ?? ''),
             'link_url' => esc_url_raw($data['link_url'] ?? ''),
-            'door_type' => sanitize_text_field($data['door_type'] ?? 'modal'),
+            'door_type' => in_array($data['door_type'] ?? 'modal', ['modal', 'link']) ? $data['door_type'] : 'modal',
             'animation' => sanitize_text_field($data['animation'] ?? 'fade'),
             'styles' => json_encode($data['styles'] ?? array()),
             'custom_css' => sanitize_textarea_field($data['custom_css'] ?? ''),
@@ -211,187 +245,64 @@ class Advent_Calendar {
             $result = $wpdb->update(
                 $table,
                 $door_data,
-                array('id' => $data['id']),
+                array('id' => intval($data['id'])),
                 $format,
                 array('%d')
             );
             
-            return $result !== false ? $data['id'] : false;
+            return $result !== false ? intval($data['id']) : false;
         } else {
             $result = $wpdb->insert($table, $door_data, $format);
             return $result ? $wpdb->insert_id : false;
         }
     }
-    
-    public static function can_unlock_door($door_number, $calendar_settings) {
-        $current_date = current_time('Y-m-d');
-        $start_date = $calendar_settings['start_date'] ?? date('Y-12-01');
-        
-        $door_date = date('Y-m-d', strtotime($start_date . ' + ' . ($door_number - 1) . ' days'));
-        
-        return $current_date >= $door_date;
-    }
-    
-    public static function log_door_open($door_id, $calendar_id) {
-    global $wpdb;
-    
-    // Sprawdź czy użytkownik już otworzył te drzwi (na podstawie sesji)
-    $user_session = self::get_user_session();
-    
-    $already_opened = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
-         WHERE door_id = %d AND user_session = %s",
-        $door_id, $user_session
-    ));
-    
-    if ($already_opened) {
-        // Użytkownik już otworzył te drzwi - zwróć success ale nie zwiększaj licznika
-        return true;
-    }
-    
-    // Zwiększ globalny licznik otwarć (do statystyk)
-    $wpdb->query($wpdb->prepare(
-        "UPDATE {$wpdb->prefix}advent_calendar_doors 
-         SET open_count = open_count + 1 
-         WHERE id = %d",
-        $door_id
-    ));
-    
-    // Zapisz otwarcie dla tego użytkownika
-    $result = $wpdb->insert(
-        $wpdb->prefix . 'advent_calendar_stats',
-        array(
-            'calendar_id' => $calendar_id,
-            'door_id' => $door_id,
-            'user_ip' => self::get_user_ip(),
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-            'user_session' => $user_session, // DODAJ TE LINIĘ
-            'opened_at' => current_time('mysql')
-        ),
-        array('%d', '%d', '%s', '%s', '%s', '%s')
-    );
-    
-    return $result ? $wpdb->insert_id : false;
-}
 
-    public static function has_user_opened_door_with_session($door_id, $user_session) {
-    global $wpdb;
-    
-    $opened = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
-         WHERE door_id = %d AND user_session = %s",
-        $door_id, $user_session
-    ));
-    
-    return $opened > 0;
-}
-
-/**
- * Zapisuje otwarcie drzwi z konkretną sesją
- */
-public static function log_door_open_with_session($door_id, $calendar_id, $user_session) {
-    global $wpdb;
-    
-    // Zwiększ globalny licznik
-    $wpdb->query($wpdb->prepare(
-        "UPDATE {$wpdb->prefix}advent_calendar_doors 
-         SET open_count = open_count + 1 
-         WHERE id = %d",
-        $door_id
-    ));
-    
-    // Zapisz otwarcie dla tego użytkownika
-    $result = $wpdb->insert(
-        $wpdb->prefix . 'advent_calendar_stats',
-        array(
-            'calendar_id' => $calendar_id,
-            'door_id' => $door_id,
-            'user_ip' => self::get_user_ip(),
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-            'user_session' => $user_session,
-            'opened_at' => current_time('mysql')
-        ),
-        array('%d', '%d', '%s', '%s', '%s', '%s')
-    );
-    
-    return $result ? $wpdb->insert_id : false;
-}
-    
     private static function get_user_ip() {
+        $ip = '';
+        
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            return $_SERVER['HTTP_CLIENT_IP'];
+            $ip = sanitize_text_field($_SERVER['HTTP_CLIENT_IP']);
         } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            return $_SERVER['HTTP_X_FORWARDED_FOR'];
+            $ip = sanitize_text_field($_SERVER['HTTP_X_FORWARDED_FOR']);
         } else {
-            return $_SERVER['REMOTE_ADDR'] ?? '';
+            $ip = sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? '');
         }
+        
+        // Validate IP address
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            $ip = '0.0.0.0';
+        }
+        
+        return $ip;
     }
 
     private static function get_user_session() {
-    $cookie_name = 'advent_calendar_user_session';
-    
-    // Sprawdź czy mamy user_session z AJAX
-    if (isset($_POST['user_session']) && !empty($_POST['user_session'])) {
-        $session = sanitize_text_field($_POST['user_session']);
-        // Zapisz też w cookie na przyszłość
-        setcookie($cookie_name, $session, time() + (365 * DAY_IN_SECONDS), '/');
-        return $session;
-    }
-    
-    // Sprawdź cookie
-    if (isset($_COOKIE[$cookie_name]) && !empty($_COOKIE[$cookie_name])) {
-        return $_COOKIE[$cookie_name];
-    }
-    
-    // Sprawdź localStorage przez JavaScript (dodamy później)
-    if (isset($_POST['local_storage_session']) && !empty($_POST['local_storage_session'])) {
-        $session = sanitize_text_field($_POST['local_storage_session']);
-        setcookie($cookie_name, $session, time() + (365 * DAY_IN_SECONDS), '/');
-        return $session;
-    }
-    
-    // Utwórz nową sesję
-    $new_session = 'user_' . uniqid() . '_' . time();
-    setcookie($cookie_name, $new_session, time() + (365 * DAY_IN_SECONDS), '/');
-    return $new_session;
-}
-    
-    public static function has_user_opened_door($door_id) {
-        global $wpdb;
+        $cookie_name = 'advent_calendar_user_session';
         
-        $user_session = self::get_user_session();
-        
-        $opened = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
-             WHERE door_id = %d AND user_session = %s",
-            $door_id, $user_session
-        ));
-        
-        return $opened > 0;
-    }
-    
-    public static function delete_calendar($id) {
-        global $wpdb;
-        
-        $result = $wpdb->delete($wpdb->prefix . 'advent_calendars', array('id' => $id), array('%d'));
-        
-        if ($result !== false) {
-            // Delete related data
-            $wpdb->delete($wpdb->prefix . 'advent_calendar_doors', array('calendar_id' => $id), array('%d'));
-            $wpdb->delete($wpdb->prefix . 'advent_calendar_stats', array('calendar_id' => $id), array('%d'));
-            $wpdb->delete($wpdb->prefix . 'advent_calendar_styles', array('calendar_id' => $id), array('%d'));
+        // Sprawdź czy mamy user_session z AJAX
+        if (isset($_POST['user_session']) && !empty($_POST['user_session'])) {
+            $session = sanitize_text_field(wp_unslash($_POST['user_session']));
+            // Zapisz też w cookie na przyszłość
+            setcookie($cookie_name, $session, time() + (365 * DAY_IN_SECONDS), '/', '', is_ssl(), true);
+            return $session;
         }
         
-        return $result !== false;
-    }
-    
-    public static function get_door_by_calendar_and_number($calendar_id, $door_number) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'advent_calendar_doors';
-        return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $table WHERE calendar_id = %d AND door_number = %d",
-            $calendar_id, $door_number
-        ));
+        // Sprawdź cookie
+        if (isset($_COOKIE[$cookie_name]) && !empty($_COOKIE[$cookie_name])) {
+            return sanitize_text_field(wp_unslash($_COOKIE[$cookie_name]));
+        }
+        
+        // Sprawdź localStorage przez JavaScript (dodamy później)
+        if (isset($_POST['local_storage_session']) && !empty($_POST['local_storage_session'])) {
+            $session = sanitize_text_field(wp_unslash($_POST['local_storage_session']));
+            setcookie($cookie_name, $session, time() + (365 * DAY_IN_SECONDS), '/', '', is_ssl(), true);
+            return $session;
+        }
+        
+        // Utwórz nową sesję
+        $new_session = 'user_' . uniqid() . '_' . time();
+        setcookie($cookie_name, $new_session, time() + (365 * DAY_IN_SECONDS), '/', '', is_ssl(), true);
+        return $new_session;
     }
 }
 ?>

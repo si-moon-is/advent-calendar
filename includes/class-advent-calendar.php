@@ -77,7 +77,6 @@ class Advent_Calendar {
         return true;
     }
 
-      
     public static function get_calendars() {
         global $wpdb;
         $table = $wpdb->prefix . 'advent_calendars';
@@ -100,6 +99,15 @@ class Advent_Calendar {
         global $wpdb;
         $table = $wpdb->prefix . 'advent_calendar_doors';
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $door_id));
+    }
+
+    public static function get_door_by_calendar_and_number($calendar_id, $door_number) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'advent_calendar_doors';
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE calendar_id = %d AND door_number = %d",
+            $calendar_id, $door_number
+        ));
     }
     
     public static function save_calendar($data) {
@@ -257,6 +265,21 @@ class Advent_Calendar {
         }
     }
 
+    public static function delete_calendar($id) {
+        global $wpdb;
+        
+        $result = $wpdb->delete($wpdb->prefix . 'advent_calendars', array('id' => $id), array('%d'));
+        
+        if ($result !== false) {
+            // Delete related data
+            $wpdb->delete($wpdb->prefix . 'advent_calendar_doors', array('calendar_id' => $id), array('%d'));
+            $wpdb->delete($wpdb->prefix . 'advent_calendar_stats', array('calendar_id' => $id), array('%d'));
+            $wpdb->delete($wpdb->prefix . 'advent_calendar_styles', array('calendar_id' => $id), array('%d'));
+        }
+        
+        return $result !== false;
+    }
+
     public static function can_unlock_door($door_number, $calendar_settings) {
         $current_date = current_time('Y-m-d');
         $start_date = $calendar_settings['start_date'] ?? date('Y-12-01');
@@ -273,6 +296,20 @@ class Advent_Calendar {
         return $current_date >= $door_date;
     }
     
+    public static function has_user_opened_door($door_id) {
+        global $wpdb;
+        
+        $user_session = self::get_user_session();
+        
+        $opened = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
+             WHERE door_id = %d AND user_session = %s",
+            $door_id, $user_session
+        ));
+        
+        return $opened > 0;
+    }
+
     public static function has_user_opened_door_with_session($door_id, $user_session) {
         global $wpdb;
         
@@ -285,9 +322,48 @@ class Advent_Calendar {
         return $opened > 0;
     }
 
-    /**
-     * Zapisuje otwarcie drzwi z konkretną sesją
-     */
+    public static function log_door_open($door_id, $calendar_id) {
+        global $wpdb;
+        
+        // Sprawdź czy użytkownik już otworzył te drzwi (na podstawie sesji)
+        $user_session = self::get_user_session();
+        
+        $already_opened = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats 
+             WHERE door_id = %d AND user_session = %s",
+            $door_id, $user_session
+        ));
+        
+        if ($already_opened) {
+            // Użytkownik już otworzył te drzwi - zwróć success ale nie zwiększaj licznika
+            return true;
+        }
+        
+        // Zwiększ globalny licznik otwarć (do statystyk)
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->prefix}advent_calendar_doors 
+             SET open_count = open_count + 1 
+             WHERE id = %d",
+            $door_id
+        ));
+        
+        // Zapisz otwarcie dla tego użytkownika
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'advent_calendar_stats',
+            array(
+                'calendar_id' => $calendar_id,
+                'door_id' => $door_id,
+                'user_ip' => self::get_user_ip(),
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+                'user_session' => $user_session,
+                'opened_at' => current_time('mysql')
+            ),
+            array('%d', '%d', '%s', '%s', '%s', '%s')
+        );
+        
+        return $result ? $wpdb->insert_id : false;
+    }
+
     public static function log_door_open_with_session($door_id, $calendar_id, $user_session) {
         global $wpdb;
         

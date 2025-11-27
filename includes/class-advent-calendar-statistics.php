@@ -7,9 +7,8 @@ class Advent_Calendar_Statistics {
     }
     
     public function get_calendar_stats_ajax() {
-        check_ajax_referer('advent_calendar_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
+        // Sprawdź nonce i uprawnienia
+        if (!wp_verify_nonce($_POST['nonce'], 'advent_calendar_admin_nonce') || !current_user_can('manage_options')) {
             wp_send_json_error('Brak uprawnień');
         }
         
@@ -19,19 +18,22 @@ class Advent_Calendar_Statistics {
         wp_send_json_success($stats);
     }
     
-    public function get_calendar_statistics($calendar_id) {
+    public static function get_calendar_statistics($calendar_id) {
         global $wpdb;
         
+        // Łączne otwarcia
         $total_opens = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->prefix}advent_calendar_stats WHERE calendar_id = %d",
             $calendar_id
         ));
         
+        // Unikalni użytkownicy
         $unique_visitors = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(DISTINCT user_ip) FROM {$wpdb->prefix}advent_calendar_stats WHERE calendar_id = %d",
             $calendar_id
         ));
         
+        // Najpopularniejsze drzwi
         $popular_doors = $wpdb->get_results($wpdb->prepare(
             "SELECT d.door_number, d.title, COUNT(s.id) as open_count 
              FROM {$wpdb->prefix}advent_calendar_stats s 
@@ -43,6 +45,7 @@ class Advent_Calendar_Statistics {
             $calendar_id
         ));
         
+        // Otwarcia według dni
         $daily_opens = $wpdb->get_results($wpdb->prepare(
             "SELECT DATE(opened_at) as date, COUNT(*) as count 
              FROM {$wpdb->prefix}advent_calendar_stats 
@@ -60,15 +63,16 @@ class Advent_Calendar_Statistics {
         );
     }
     
-    public function get_door_statistics($door_id) {
-        global $wpdb;
+    public function export_stats() {
+        // Funkcja eksportu statystyk
+        if (!wp_verify_nonce($_POST['nonce'], 'advent_calendar_admin_nonce') || !current_user_can('manage_options')) {
+            wp_die('Brak uprawnień');
+        }
         
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}advent_calendar_stats 
-             WHERE door_id = %d 
-             ORDER BY opened_at DESC",
-            $door_id
-        ));
+        $calendar_id = intval($_POST['calendar_id']);
+        
+        // Tutaj kod eksportu do CSV/Excel
+        // ...
     }
 }
 ?>

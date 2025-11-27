@@ -33,11 +33,22 @@ class Advent_Calendar_Frontend {
         }
         
         $settings = json_decode($calendar->settings, true);
-        $doors = Advent_Calendar::get_calendar_doors($atts['id']);
+        $theme = $settings['theme'] ?? 'christmas';
         
-        ob_start();
-        include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/calendar-frontend.php';
-        return ob_get_clean();
+        // Load theme-specific template
+        $theme_template = ADVENT_CALENDAR_PLUGIN_PATH . "templates/themes/{$theme}/calendar-frontend.php";
+        
+        if (file_exists($theme_template)) {
+            ob_start();
+            include $theme_template;
+            return ob_get_clean();
+        } else {
+            // Fallback to default template
+            $doors = Advent_Calendar::get_calendar_doors($atts['id']);
+            ob_start();
+            include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/calendar-frontend.php';
+            return ob_get_clean();
+        }
     }
 }
 ?>

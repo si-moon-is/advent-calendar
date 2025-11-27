@@ -3,6 +3,7 @@ class Advent_Calendar_Statistics {
     
     public function __construct() {
         add_action('wp_ajax_get_calendar_stats', array($this, 'get_calendar_stats_ajax'));
+        add_action('wp_ajax_export_stats', array($this, 'export_stats'));
     }
     
     public function get_calendar_stats_ajax() {

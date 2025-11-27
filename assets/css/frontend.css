@@ -402,3 +402,87 @@ body.modal-open {
 .door-default-content .door-icon {
     font-size: 2em;
 }
+/* Kontener obrazka */
+.door-image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.door-main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all 0.3s ease;
+}
+
+/* Przyciemnienie dla zamkniętych drzwi */
+.door-image-container.closed .door-main-image {
+    filter: brightness(0.3) blur(1px);
+}
+
+.door-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.door-image-container.opened .door-main-image {
+    filter: brightness(1);
+}
+
+/* Domyślna zawartość bez obrazka */
+.door-default-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.door-default-content.closed {
+    background: linear-gradient(145deg, #d4af37, #ffd700);
+}
+
+.door-default-content.opened {
+    background: linear-gradient(145deg, #90ee90, #32cd32);
+}
+
+.door-icon {
+    font-size: 1.8em;
+    font-weight: bold;
+}
+
+.door-default-content.closed .door-icon {
+    color: #8b4513;
+}
+
+.door-default-content.opened .door-icon {
+    color: #006400;
+}
+
+.door-number {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    z-index: 10;
+}

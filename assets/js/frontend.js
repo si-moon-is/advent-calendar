@@ -83,26 +83,33 @@ markDoorAsOpened: function(doorId, userSession) {
 },
         
         handleDoorOpenSuccess: function(door, data) {
-            door.addClass('open door-animation-' + data.animation);
-            
-            if (data.effects && data.effects.length) {
-                data.effects.forEach(effect => {
-                    this.playEffect(effect);
-                });
-            }
-            
-            setTimeout(() => {
-                if (data.door_type === 'modal') {
-                    this.showModal(data.content);
-                } else if (data.door_type === 'link' && data.link_url) {
-                    window.open(data.link_url, '_blank');
-                } else {
-                    this.showInlineContent(door, data.content);
-                }
-                
-                door.addClass('door-success');
-            }, 600);
-        },
+    door.addClass('open door-animation-' + data.animation);
+    
+    if (data.effects && data.effects.length) {
+        data.effects.forEach(effect => {
+            this.playEffect(effect);
+        });
+    }
+    
+    setTimeout(() => {
+        // Jeśli drzwi mają obrazek, pokaż go
+        if (data.image_url) {
+            const imageHtml = `<div class="door-content"><img src="${data.image_url}" alt="Door content" class="door-main-image"></div>`;
+            door.find('.door-default-closed').remove();
+            door.append(imageHtml);
+        }
+        
+        if (data.door_type === 'modal') {
+            this.showModal(data.content);
+        } else if (data.door_type === 'link' && data.link_url) {
+            window.open(data.link_url, '_blank');
+        } else {
+            this.showInlineContent(door, data.content);
+        }
+        
+        door.addClass('door-success');
+    }, 600);
+},
         
         handleDoorOpenError: function(door, error) {
             this.showError(error || 'Wystąpił błąd podczas otwierania drzwi.');

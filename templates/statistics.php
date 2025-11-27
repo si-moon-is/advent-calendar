@@ -72,7 +72,7 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'get_calendar_stats',
-                nonce: '<?php echo wp_create_nonce('advent_calendar_admin_nonce'); ?>',
+                nonce: '<?php echo wp_create_nonce('advent_calendar_nonce'); ?>'
                 calendar_id: calendarId
             },
             success: function(response) {

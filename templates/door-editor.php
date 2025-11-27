@@ -91,14 +91,35 @@ $total_doors = $settings['columns'] * $settings['rows'];
                 </div>
                 
                 <div class="form-field">
-                    <label for="calendar-theme">Motyw</label>
-                    <select id="calendar-theme">
-                        <option value="christmas" <?php selected('christmas', $settings['theme']); ?>>Świąteczny</option>
-                        <option value="winter" <?php selected('winter', $settings['theme']); ?>>Zimowy</option>
-                        <option value="modern" <?php selected('modern', $settings['theme']); ?>>Nowoczesny</option>
-                        <option value="classic" <?php selected('classic', $settings['theme']); ?>>Klasyczny</option>
-                    </select>
-                </div>
+    <label for="calendar-theme">Motyw</label>
+    <div class="theme-preview-container">
+        <select id="calendar-theme" name="theme">
+            <option value="christmas" <?php selected('christmas', $settings['theme']); ?>>Świąteczny</option>
+            <option value="winter" <?php selected('winter', $settings['theme']); ?>>Zimowy</option>
+            <option value="modern" <?php selected('modern', $settings['theme']); ?>>Nowoczesny</option>
+            <option value="classic" <?php selected('classic', $settings['theme']); ?>>Klasyczny</option>
+        </select>
+        
+        <div class="theme-previews">
+            <div class="theme-preview <?php echo $settings['theme'] === 'christmas' ? 'active' : ''; ?>" data-theme="christmas">
+                <div class="preview-image christmas-preview"></div>
+                <span class="preview-label">Świąteczny</span>
+            </div>
+            <div class="theme-preview <?php echo $settings['theme'] === 'winter' ? 'active' : ''; ?>" data-theme="winter">
+                <div class="preview-image winter-preview"></div>
+                <span class="preview-label">Zimowy</span>
+            </div>
+            <div class="theme-preview <?php echo $settings['theme'] === 'modern' ? 'active' : ''; ?>" data-theme="modern">
+                <div class="preview-image modern-preview"></div>
+                <span class="preview-label">Nowoczesny</span>
+            </div>
+            <div class="theme-preview <?php echo $settings['theme'] === 'classic' ? 'active' : ''; ?>" data-theme="classic">
+                <div class="preview-image classic-preview"></div>
+                <span class="preview-label">Klasyczny</span>
+            </div>
+        </div>
+    </div>
+</div>
                 
                 <div class="form-field">
                     <label for="calendar-default-animation">Domyślna animacja</label>

@@ -67,22 +67,30 @@ jQuery(document).ready(function($) {
     let doorsChart = null;
     
     function loadStats(calendarId) {
-        $.ajax({
-            url: '<?php echo admin_url('admin-ajax.php'); ?>',
-            type: 'POST',
-            data: {
-                action: 'get_calendar_stats',
-                nonce: '<?php echo wp_create_nonce('advent_calendar_nonce'); ?>'
-                calendar_id: calendarId
-            },
-            success: function(response) {
-                if (response.success) {
-                    updateStatsDisplay(response.data);
-                    updateCharts(response.data);
-                }
+    console.log('Loading stats for calendar:', calendarId);
+    
+    $.ajax({
+        url: '<?php echo admin_url('admin-ajax.php'); ?>',
+        type: 'POST',
+        data: {
+            action: 'get_calendar_stats',
+            nonce: '<?php echo wp_create_nonce('advent_calendar_nonce'); ?>',
+            calendar_id: calendarId
+        },
+        success: function(response) {
+            console.log('AJAX Response:', response);
+            if (response.success) {
+                updateStatsDisplay(response.data);
+                updateCharts(response.data);
+            } else {
+                console.error('AJAX Error:', response.data);
             }
-        });
-    }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Request Failed:', error);
+        }
+    });
+}
     
     function updateStatsDisplay(stats) {
         $('.stat-card:eq(0) .stat-number').text(stats.total_opens || 0);

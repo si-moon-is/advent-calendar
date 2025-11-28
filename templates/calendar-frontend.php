@@ -232,15 +232,15 @@ $safe_settings = wp_parse_args($settings, array(
 }
 
 /* Emoji dla każdego drzwi */
-.door-10 .default-christmas-image::before { content: "1"; }
-.door-12 .default-christmas-image::before { content: "2"; }
-.door-13 .default-christmas-image::before { content: "3"; }
-.door-14 .default-christmas-image::before { content: "4"; }
-.door-15 .default-christmas-image::before { content: "5"; }
-.door-16 .default-christmas-image::before { content: "6"; }
-.door-17 .default-christmas-image::before { content: "7"; }
-.door-18 .default-christmas-image::before { content: "8"; }
-.door-19 .default-christmas-image::before { content: "9"; }
+.door-1 .default-christmas-image::before { content: "1"; }
+.door-2 .default-christmas-image::before { content: "2"; }
+.door-3 .default-christmas-image::before { content: "3"; }
+.door-4 .default-christmas-image::before { content: "4"; }
+.door-5 .default-christmas-image::before { content: "5"; }
+.door-6 .default-christmas-image::before { content: "6"; }
+.door-7 .default-christmas-image::before { content: "7"; }
+.door-8 .default-christmas-image::before { content: "8"; }
+.door-9 .default-christmas-image::before { content: "9"; }
 .door-10 .default-christmas-image::before { content: "10"; }
 .door-11 .default-christmas-image::before { content: "11"; }
 .door-12 .default-christmas-image::before { content: "12"; }

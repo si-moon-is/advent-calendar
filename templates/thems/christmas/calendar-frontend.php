@@ -15,6 +15,9 @@ $settings = json_decode($calendar->settings, true);
 $columns = isset($settings['columns']) ? intval($settings['columns']) : 6;
 $rows = isset($settings['rows']) ? intval($settings['rows']) : 4;
 $total_doors = $columns * $rows;
+
+// Ścieżka do obrazków motywu
+$theme_images_path = ADVENT_CALENDAR_PLUGIN_URL . 'templates/thems/christmas/images/';
 ?>
 
 <div class="advent-calendar advent-theme-christmas" 
@@ -43,32 +46,28 @@ $total_doors = $columns * $rows;
             $user_has_opened = $door ? Advent_Calendar::has_user_opened_door($door->id) : false;
             $door_class = $user_has_opened ? 'open' : ($can_open ? 'available' : 'locked');
             $door_id = $door ? intval($door->id) : 0;
+            
+            // Sprawdź czy istnieje domyślny obrazek dla tego motywu
+            $default_image_url = $theme_images_path . 'door-' . $i . '.png';
         ?>
             
             <div class="advent-calendar-door christmas-door <?php echo esc_attr($door_class); ?>" 
                  data-door-id="<?php echo esc_attr($door_id); ?>"
                  data-calendar-id="<?php echo esc_attr($calendar_id); ?>"
-                 data-door-number="<?php echo intval($i); ?>">
-        
+                 data-door-number="<?php echo intval($i); ?>"
+                 <?php if (!$user_has_opened): ?>
+                    style="background-image: url('<?php echo esc_url($default_image_url); ?>'); background-size: cover; background-position: center;"
+                 <?php endif; ?>>
+
                 <span class="door-number"><?php echo intval($i); ?></span>
-        
-                <?php if ($door && !empty($door->image_url)): ?>
-                    <div class="door-image-container <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
-                        <img src="<?php echo esc_url($door->image_url); ?>" alt="Door <?php echo intval($i); ?>" class="door-main-image">
-                        <?php if (!$user_has_opened): ?>
-                            <div class="door-overlay">
-                                <span class="snow-icon">❄</span>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+
+                <?php if ($user_has_opened): ?>
+                    <!-- PO otwarciu - obrazek jako tło (już ustawione w style powyżej) -->
+                    <div class="door-image-overlay"></div>
                 <?php else: ?>
-                    <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
-                        <?php if ($user_has_opened): ?>
-                            <span class="door-icon">🎁</span>
-                        <?php else: ?>
-                            <div class="christmas-pattern door-<?php echo intval($i); ?>"></div>
-                            <span class="door-number-default"><?php echo intval($i); ?></span>
-                        <?php endif; ?>
+                    <!-- PRZED otwarciem - obrazek jako tło z overlay -->
+                    <div class="door-overlay">
+                        <span class="snow-icon">❄</span>
                     </div>
                 <?php endif; ?>
             </div>
@@ -131,24 +130,18 @@ $total_doors = $columns * $rows;
     border: 2px solid #b8860b;
 }
 
-.christmas-door.available {
-    background: linear-gradient(145deg, #d4af37, #ffd700);
-}
-
 .christmas-door.available:hover {
     transform: translateY(-5px) scale(1.05);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-    background: linear-gradient(145deg, #ffd700, #ffec8b);
 }
 
 .christmas-door.locked {
-    background: linear-gradient(145deg, #8b4513, #a0522d);
     cursor: not-allowed;
     opacity: 0.7;
+    filter: brightness(0.6) blur(1px);
 }
 
 .christmas-door.open {
-    background: linear-gradient(145deg, #90ee90, #32cd32);
     border-color: #228b22;
     cursor: default;
 }
@@ -170,17 +163,17 @@ $total_doors = $columns * $rows;
     border: 1px solid #ffd700;
 }
 
-.christmas-pattern {
+.door-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
-        radial-gradient(circle at 20% 20%, #ffd700 2px, transparent 2px),
-        radial-gradient(circle at 80% 80%, #c41e3a 2px, transparent 2px);
-    background-size: 20px 20px;
-    opacity: 0.3;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
 }
 
 .snow-icon {
@@ -189,13 +182,15 @@ $total_doors = $columns * $rows;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* Christmas colors for each door */
-.christmas-door:nth-child(odd).available {
-    background: linear-gradient(135deg, #c41e3a, #8b0000);
-}
-
-.christmas-door:nth-child(even).available {
-    background: linear-gradient(135deg, #165b33, #0d3d21);
+.door-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%);
+    border-radius: 8px;
+    z-index: 1;
 }
 
 @media (max-width: 768px) {

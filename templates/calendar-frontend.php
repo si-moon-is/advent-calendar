@@ -49,32 +49,34 @@ $safe_settings = wp_parse_args($settings, array(
         $door_id = $door ? intval($door->id) : 0;
     ?>
         
-        <div class="advent-calendar-door door <?php echo esc_attr($door_class); ?> door-<?php echo intval($i); ?>" 
+ <div class="advent-calendar-door door <?php echo esc_attr($door_class); ?> door-<?php echo intval($i); ?>" 
      data-door-id="<?php echo esc_attr($door_id); ?>"
      data-calendar-id="<?php echo esc_attr($calendar_id); ?>"
-     data-door-number="<?php echo intval($i); ?>">
+     data-door-number="<?php echo intval($i); ?>"
+     <?php if ($door && !empty($door->image_url) && $user_has_opened): ?>
+        style="background-image: url('<?php echo esc_url($door->image_url); ?>'); background-size: cover; background-position: center;"
+     <?php endif; ?>>
 
     <span class="door-number"><?php echo intval($i); ?></span>
 
     <?php if ($door && !empty($door->image_url)): ?>
-        <!-- Obrazek z bazy -->
-        <div class="door-image-container <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
-            <img src="<?php echo esc_url($door->image_url); ?>" alt="Door <?php echo intval($i); ?>" class="door-main-image">
-            <?php if (!$user_has_opened): ?>
-                <div class="door-overlay"></div>
-            <?php endif; ?>
-        </div>
+        <?php if (!$user_has_opened): ?>
+            <!-- PRZED otwarciem - domyślny wygląd -->
+            <div class="door-default-content closed">
+                <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
+            </div>
+        <?php else: ?>
+            <!-- PO otwarciu - obrazek jako tło (już ustawione w style powyżej) -->
+            <!-- Dodajemy tylko przezroczysty overlay dla efektu wizualnego -->
+            <div class="door-image-overlay"></div>
+        <?php endif; ?>
     <?php else: ?>
-        <!-- Domyślny wygląd z gradientami i emoji -->
-        <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?> 
-             <?php echo esc_attr($safe_settings['theme']) === 'christmas' ? 'christmas-default' : ''; ?>">
-             
+        <!-- Brak obrazka - zawsze domyślny wygląd -->
+        <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
             <?php if ($user_has_opened): ?>
                 <span class="door-icon">🎁</span>
             <?php else: ?>
-                <!-- Gradient + emoji -->
                 <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
-                <!-- USUŃ TĘ LINIĘ: <span class="door-number-default">3</span> -->
             <?php endif; ?>
         </div>
     <?php endif; ?>

@@ -232,30 +232,21 @@ $safe_settings = wp_parse_args($settings, array(
 }
 
 /* Emoji dla każdego drzwi */
-.door-1 .default-christmas-image::before { content: "1️⃣️"; }
-.door-2 .default-christmas-image::before { content: "2️⃣️"; }
-.door-3 .default-christmas-image::before { content: "3️⃣️"; }
-.door-4 .default-christmas-image::before { content: "4️⃣️"; }
-.door-5 .default-christmas-image::before { content: "5️⃣️"; }
-.door-6 .default-christmas-image::before { content: "6️⃣️"; }
-.door-7 .default-christmas-image::before { content: "7️⃣️"; }
-.door-8 .default-christmas-image::before { content: "8️⃣️"; }
-.door-9 .default-christmas-image::before { content: "9️⃣️"; }
-.door-10 .default-christmas-image::before { content: "🔟"; }
-.door-11 .default-christmas-image::before { content: "1️⃣️1️⃣️"; }
-.door-12 .default-christmas-image::before { content: "1️⃣️2️⃣️"; }
-.door-13 .default-christmas-image::before { content: "1️⃣️3️⃣️"; }
-.door-14 .default-christmas-image::before { content: "1️⃣️4️⃣️"; }
-.door-15 .default-christmas-image::before { content: "1️⃣️5️⃣️"; }
-.door-16 .default-christmas-image::before { content: "1️⃣️6️⃣️"; }
-.door-17 .default-christmas-image::before { content: "1️⃣️7️⃣️"; }
-.door-18 .default-christmas-image::before { content: "1️⃣️8️⃣️"; }
-.door-19 .default-christmas-image::before { content: "1️⃣️9️⃣️"; }
-.door-20 .default-christmas-image::before { content: "2️⃣️0️⃣️"; }
-.door-21 .default-christmas-image::before { content: "2️⃣️1️⃣️"; }
-.door-22 .default-christmas-image::before { content: "2️⃣️2️⃣️"; }
-.door-23 .default-christmas-image::before { content: "2️⃣️3️⃣️"; }
-.door-24 .default-christmas-image::before { content: "2️⃣️4️⃣️"; }
+.door-10 .default-christmas-image::before { content: "10"; }
+.door-11 .default-christmas-image::before { content: "11"; }
+.door-12 .default-christmas-image::before { content: "12"; }
+.door-13 .default-christmas-image::before { content: "13"; }
+.door-14 .default-christmas-image::before { content: "14"; }
+.door-15 .default-christmas-image::before { content: "15"; }
+.door-16 .default-christmas-image::before { content: "16"; }
+.door-17 .default-christmas-image::before { content: "17"; }
+.door-18 .default-christmas-image::before { content: "18"; }
+.door-19 .default-christmas-image::before { content: "19"; }
+.door-20 .default-christmas-image::before { content: "20"; }
+.door-21 .default-christmas-image::before { content: "21"; }
+.door-22 .default-christmas-image::before { content: "22"; }
+.door-23 .default-christmas-image::before { content: "23"; }
+.door-24 .default-christmas-image::before { content: "24"; }
 
 .default-christmas-image::before {
     font-size: 2.5em;

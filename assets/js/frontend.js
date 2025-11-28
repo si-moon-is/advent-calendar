@@ -68,18 +68,39 @@ jQuery(document).ready(function($) {
             }, 100);
         },
 
-        // DODAJ NOWĄ METODĘ do aktualizacji stanu wizualnego
-        updateDoorVisualState: function($door) {
-            if ($door.find('.door-image-container').length) {
-                $door.find('.door-image-container').removeClass('closed').addClass('opened');
-                $door.find('.door-overlay').remove();
-            } else if ($door.find('.door-default-content').length) {
-                $door.find('.door-default-content').removeClass('closed').addClass('opened');
-                $door.find('.door-icon').text('🎁');
-            }
-            
-            // USUŃ wywołanie showDoorContent - modal nie powinien się pokazywać automatycznie
-        },
+        updateDoorVisualState: function($door, doorData = null) {
+    const doorId = $door.data('door-id');
+    
+    // Sprawdź czy drzwi mają obrazek
+    if (doorData && doorData.image_url) {
+        // Ustaw obrazek jako tło
+        $door.css({
+            'background-image': 'url("' + doorData.image_url + '")',
+            'background-size': 'cover',
+            'background-position': 'center'
+        });
+        
+        // Dodaj overlay dla lepszej czytelności
+        if (!$door.find('.door-image-overlay').length) {
+            $door.append('<div class="door-image-overlay"></div>');
+        }
+        
+        // Usuń domyślną zawartość
+        $door.find('.door-default-content').remove();
+    } else {
+        // Brak obrazka - standardowy wygląd
+        if ($door.find('.door-image-container').length) {
+            $door.find('.door-image-container').removeClass('closed').addClass('opened');
+            $door.find('.door-overlay').remove();
+        } else if ($door.find('.door-default-content').length) {
+            $door.find('.door-default-content').removeClass('closed').addClass('opened');
+            $door.find('.door-icon').text('🎁');
+        }
+    }
+    
+    // Dodaj styl dla otwartych drzwi
+    $door.addClass('open').removeClass('available locked');
+},
         
         setCookie: function(name, value, days) {
             const date = new Date();

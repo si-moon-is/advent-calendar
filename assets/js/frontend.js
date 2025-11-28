@@ -158,32 +158,33 @@ jQuery(document).ready(function($) {
         },
 
         handleDoorOpenSuccess: function(door, data) {
-            console.log('Handling door open success:', data);
-            
-            // Handle already opened doors
-            if (data.already_opened) {
-                // POPRAWKA: Jeśli drzwi są już otwarte, tylko pokaż modal jeśli użytkownik kliknął
-                this.showDoorContent(door, data);
-                return;
-            }
-            
-            // Add animation class
-            const animation = data.animation || 'fade';
-            door.addClass('open door-animation-' + animation);
-            
-            // Play effects if available
-            if (data.effects && data.effects.length) {
-                data.effects.forEach(effect => {
-                    this.playEffect(effect);
-                });
-            }
-            
-            // Show content after animation
-            setTimeout(() => {
-                this.showDoorContent(door, data);
-                door.addClass('door-success');
-            }, 600);
-        },
+    console.log('Handling door open success:', data);
+    
+    // Handle already opened doors
+    if (data.already_opened) {
+        this.updateDoorVisualState(door, data); // Przekaż dane drzwi
+        this.showDoorContent(door, data);
+        return;
+    }
+    
+    // Add animation class
+    const animation = data.animation || 'fade';
+    door.addClass('door-animation-' + animation);
+    
+    // Play effects if available
+    if (data.effects && data.effects.length) {
+        data.effects.forEach(effect => {
+            this.playEffect(effect);
+        });
+    }
+    
+    // Show content after animation
+    setTimeout(() => {
+        this.updateDoorVisualState(door, data); // Przekaż dane drzwi
+        this.showDoorContent(door, data);
+        door.addClass('door-success open');
+    }, 600);
+},
 
         showDoorContent: function(door, data) {
             console.log('Showing door content:', data);

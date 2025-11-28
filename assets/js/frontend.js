@@ -8,7 +8,8 @@ jQuery(document).ready(function($) {
             console.log('Initializing Advent Calendar...');
             this.bindEvents();
             this.initializeUserSession();
-            this.checkLocalStorageDoors(); // DODAJ TE LINIĘ - musi być PO initializeUserSession
+            this.checkLocalStorageDoors();
+            this.cleanupModals(); // DODAJ TE LINIĘ - czyści ewentualne pozostałe modale
         },
         
         bindEvents: function() {
@@ -18,6 +19,13 @@ jQuery(document).ready(function($) {
             
             // Escape key to close modal
             $(document).on('keydown', this.handleKeydown.bind(this));
+        },
+        
+        // DODAJ NOWĄ METODĘ do czyszczenia modalów
+        cleanupModals: function() {
+            // Usuń wszystkie modale które mogły pozostać z poprzedniego ładowania
+            $('.advent-modal').remove();
+            $('body').removeClass('modal-open');
         },
         
         initializeUserSession: function() {
@@ -53,7 +61,7 @@ jQuery(document).ready(function($) {
                         console.log('Marking door as opened from localStorage:', doorId);
                         $door.removeClass('available locked').addClass('open');
                         
-                        // POPRAWKA: Od razu aktualizuj wizualnie drzwi bez ładowania zawartości
+                        // POPRAWKA: TYLKO aktualizuj wizualnie drzwi, NIE pokazuj modala
                         this.updateDoorVisualState($door);
                     }
                 });
@@ -69,9 +77,10 @@ jQuery(document).ready(function($) {
                 $door.find('.door-default-content').removeClass('closed').addClass('opened');
                 $door.find('.door-icon').text('🎁');
             }
+            
+            // USUŃ wywołanie showDoorContent - modal nie powinien się pokazywać automatycznie
         },
         
-        // POZOSTAŁE METODY bez zmian...
         setCookie: function(name, value, days) {
             const date = new Date();
             date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -132,6 +141,7 @@ jQuery(document).ready(function($) {
             
             // Handle already opened doors
             if (data.already_opened) {
+                // POPRAWKA: Jeśli drzwi są już otwarte, tylko pokaż modal jeśli użytkownik kliknął
                 this.showDoorContent(door, data);
                 return;
             }
@@ -169,6 +179,9 @@ jQuery(document).ready(function($) {
         },
 
         showModal: function(data) {
+            // Najpierw wyczyść istniejące modale
+            this.cleanupModals();
+            
             // Create modal structure
             const modal = $(
                 '<div class="advent-modal active" tabindex="-1" role="dialog" aria-labelledby="modal-title" aria-hidden="true">' +

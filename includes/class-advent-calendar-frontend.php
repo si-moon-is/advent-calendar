@@ -20,6 +20,7 @@ class Advent_Calendar_Frontend {
     }
     
     public function calendar_shortcode($atts) {
+        // Ustaw domyślne atrybuty
         $atts = shortcode_atts(array(
             'id' => 1,
             'columns' => 6,
@@ -28,86 +29,37 @@ class Advent_Calendar_Frontend {
         ), $atts);
         
         $calendar_id = intval($atts['id']);
+        
+        // Pobierz kalendarz
         $calendar = Advent_Calendar::get_calendar($calendar_id);
         
         if (!$calendar) {
-            return '<p class="advent-calendar-error">Kalendarz nie znaleziony [ID: ' . $calendar_id . ']</p>';
+            return '<p class="advent-error">Błąd: Kalendarz #' . $calendar_id . ' nie istnieje.</p>';
         }
         
+        // Pobierz drzwi dla tego kalendarza
+        $doors = Advent_Calendar::get_calendar_doors($calendar_id);
+        
+        // Pobierz ustawienia
         $settings = json_decode($calendar->settings, true);
-        if (!$settings) {
+        if (empty($settings) || !is_array($settings)) {
             $settings = array();
         }
         
-        // WAŻNE: Pobierz dane które potrzebne są w szablonie
-        $doors = Advent_Calendar::get_calendar_doors($calendar_id);
+        // Ustal kolumny i wiersze
         $columns = isset($settings['columns']) ? intval($settings['columns']) : intval($atts['columns']);
         $rows = isset($settings['rows']) ? intval($settings['rows']) : 4;
-        $theme = isset($settings['theme']) ? $settings['theme'] : $atts['theme'];
         $total_doors = $columns * $rows;
         
-        // Upewnij się że motyw istnieje
-        $theme_paths = array(
-            ADVENT_CALENDAR_PLUGIN_PATH . "templates/themes/{$theme}/calendar-frontend.php",
-            ADVENT_CALENDAR_PLUGIN_PATH . "templates/thems/{$theme}/calendar-frontend.php"
-        );
+        // Ustal motyw
+        $theme = isset($settings['theme']) ? $settings['theme'] : $atts['theme'];
         
-        $theme_template = '';
-        foreach ($theme_paths as $path) {
-            if (file_exists($path)) {
-                $theme_template = $path;
-                break;
-            }
-        }
-        
-        // Jeśli nie znaleziono motywu, użyj domyślnego
-        if (empty($theme_template)) {
-            $theme_template = ADVENT_CALENDAR_PLUGIN_PATH . 'templates/calendar-frontend.php';
-        }
-        
-        // BUFFER OUTPUT - PRZEKAŻ WSZYSTKIE POTRZEBNE ZMIENNE
+        // BUFFER OUTPUT
         ob_start();
         
-        // Załaduj szablon i przekaż zmienne przez extract() lub bezpośrednio
-        // Lepiej użyć include z globalnymi zmiennymi:
+        // Załaduj szablon - UWAGA: używamy domyślnego szablonu, nie motywów!
+        include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/calendar-frontend.php';
         
-        // Zdefiniuj zmienne globalne dla szablonu
-        $advent_calendar_data = array(
-            'calendar_id' => $calendar_id,
-            'calendar' => $calendar,
-            'doors' => $doors,
-            'settings' => $settings,
-            'columns' => $columns,
-            'rows' => $rows,
-            'theme' => $theme,
-            'total_doors' => $total_doors,
-            'atts' => $atts
-        );
-        
-        // Użyj funkcji pomocniczej do renderowania
-        echo $this->render_template($theme_template, $advent_calendar_data);
-        
-        return ob_get_clean();
-    }
-    
-    /**
-     * Renderuje szablon z przekazanymi danymi
-     */
-    private function render_template($template_path, $data = array()) {
-        if (!file_exists($template_path)) {
-            return '<p class="advent-calendar-error">Błąd: Szablon nie istnieje: ' . basename($template_path) . '</p>';
-        }
-        
-        // Ekstrakcja zmiennych dla szablonu
-        extract($data, EXTR_SKIP);
-        
-        // Rozpocznij buforowanie
-        ob_start();
-        
-        // Dołącz szablon - wszystkie zmienne z $data będą dostępne
-        include $template_path;
-        
-        // Zwróć zawartość bufora
         return ob_get_clean();
     }
 }

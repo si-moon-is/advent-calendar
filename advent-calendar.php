@@ -87,4 +87,12 @@ class Advent_Calendar_Plugin {
 }
 
 Advent_Calendar_Plugin::get_instance();
+
+add_action('wp_footer', function() {
+    if (is_page() || is_single()) {
+        echo '<!-- ADVENT CALENDAR DEBUG: ';
+        echo 'Shortcode registered: ' . (shortcode_exists('advent_calendar') ? 'YES' : 'NO');
+        echo ' -->';
+    }
+});
 ?>

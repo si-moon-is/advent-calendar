@@ -69,9 +69,13 @@ jQuery(document).ready(function($) {
     function loadStats(calendarId) {
     console.log('Loading stats for calendar:', calendarId);
     
+    // Pokaż loader
+    $('#stats-content').html('<div class="loading-message" style="text-align: center; padding: 50px; color: #666;">Ładowanie statystyk...</div>');
+    
     $.ajax({
         url: '<?php echo admin_url('admin-ajax.php'); ?>',
         type: 'POST',
+        dataType: 'json',
         data: {
             action: 'get_calendar_stats',
             nonce: '<?php echo wp_create_nonce('advent_calendar_nonce'); ?>',
@@ -79,15 +83,18 @@ jQuery(document).ready(function($) {
         },
         success: function(response) {
             console.log('AJAX Response:', response);
-            if (response.success) {
+            
+            if (response.success && response.data) {
                 updateStatsDisplay(response.data);
                 updateCharts(response.data);
             } else {
                 console.error('AJAX Error:', response.data);
+                $('#stats-content').html('<div class="error-message" style="color: #dc3545; padding: 20px; background: #f8d7da; border-radius: 5px;">Błąd ładowania statystyk: ' + (response.data || 'Nieznany błąd') + '</div>');
             }
         },
         error: function(xhr, status, error) {
-            console.error('AJAX Request Failed:', error);
+            console.error('AJAX Request Failed:', error, xhr.responseText);
+            $('#stats-content').html('<div class="error-message" style="color: #dc3545; padding: 20px; background: #f8d7da; border-radius: 5px;">Błąd połączenia: ' + error + '</div>');
         }
     });
 }

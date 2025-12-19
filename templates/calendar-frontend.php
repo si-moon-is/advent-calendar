@@ -93,6 +93,7 @@ $has_theme_image = file_exists($theme_image_path);
         <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
     </div>
 <?php endif; ?>
+ </div>
     <?php endfor; ?>
 </div>
 

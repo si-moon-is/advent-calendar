@@ -3,22 +3,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Pobierz calendar_id z atrybutów shortcode
-$calendar_id = isset($atts['id']) ? intval($atts['id']) : 0;
-$calendar = $calendar_id ? Advent_Calendar::get_calendar($calendar_id) : null;
+// DEBUG: Sprawdź czy zmienne są dostępne
+/*
+echo '<!-- DEBUG: ';
+echo 'calendar_id: ' . (isset($calendar_id) ? $calendar_id : 'NOT SET');
+echo ', doors count: ' . (isset($doors) ? count($doors) : 'NOT SET');
+echo ', columns: ' . (isset($columns) ? $columns : 'NOT SET');
+echo ' -->';
+*/
 
-if (!$calendar) {
-    return '<p>Kalendarz nie znaleziony</p>';
-}
-
-$doors = Advent_Calendar::get_calendar_doors($calendar_id);
-$settings = json_decode($calendar->settings, true);
-$columns = isset($settings['columns']) ? intval($settings['columns']) : 6;
-$rows = isset($settings['rows']) ? intval($settings['rows']) : 4;
-$theme = isset($settings['theme']) ? sanitize_text_field($settings['theme']) : 'christmas';
-$total_doors = $columns * $rows;
-
-// Bezpieczne ustawienia domyślne
+// Bezpieczne domyślne wartości
 $safe_settings = wp_parse_args($settings, array(
     'columns' => 6,
     'rows' => 4,
@@ -26,6 +20,12 @@ $safe_settings = wp_parse_args($settings, array(
     'end_date' => date('Y-12-24'),
     'theme' => 'christmas'
 ));
+
+// Sprawdź czy mamy kalendarz
+if (!isset($calendar) || !$calendar) {
+    echo '<p class="advent-calendar-error">Błąd: Kalendarz nie jest załadowany</p>';
+    return;
+}
 ?>
 
 <div class="advent-calendar advent-theme-<?php echo esc_attr($theme); ?>" 
@@ -34,54 +34,56 @@ $safe_settings = wp_parse_args($settings, array(
      style="display: grid; grid-template-columns: repeat(<?php echo esc_attr($columns); ?>, 1fr); gap: 15px; margin: 30px 0; padding: 30px;">
     
     <?php 
-    for ($i = 1; $i <= $total_doors; $i++): 
-        $door = null;
-        foreach ($doors as $d) {
-            if ($d->door_number == $i) {
-                $door = $d;
-                break;
+    if (empty($doors)) {
+        echo '<p class="advent-calendar-error">Brak drzwi dla tego kalendarza</p>';
+    } else {
+        for ($i = 1; $i <= $total_doors; $i++): 
+            $door = null;
+            foreach ($doors as $d) {
+                if ($d->door_number == $i) {
+                    $door = $d;
+                    break;
+                }
             }
-        }
-        
-        $can_open = $door ? Advent_Calendar::can_unlock_door($door->door_number, $safe_settings) : false;
-        $user_has_opened = $door ? Advent_Calendar::has_user_opened_door($door->id) : false;
-        $door_class = $user_has_opened ? 'open' : ($can_open ? 'available' : 'locked');
-        $door_id = $door ? intval($door->id) : 0;
+            
+            $can_open = $door ? Advent_Calendar::can_unlock_door($door->door_number, $safe_settings) : false;
+            $user_has_opened = $door ? Advent_Calendar::has_user_opened_door($door->id) : false;
+            $door_class = $user_has_opened ? 'open' : ($can_open ? 'available' : 'locked');
+            $door_id = $door ? intval($door->id) : 0;
     ?>
         
- <div class="advent-calendar-door door <?php echo esc_attr($door_class); ?> door-<?php echo intval($i); ?>" 
-     data-door-id="<?php echo esc_attr($door_id); ?>"
-     data-calendar-id="<?php echo esc_attr($calendar_id); ?>"
-     data-door-number="<?php echo intval($i); ?>"
-     <?php if ($door && !empty($door->image_url) && $user_has_opened): ?>
-        style="background-image: url('<?php echo esc_url($door->image_url); ?>'); background-size: cover; background-position: center;"
-     <?php endif; ?>>
+        <div class="advent-calendar-door door <?php echo esc_attr($door_class); ?> door-<?php echo intval($i); ?>" 
+             data-door-id="<?php echo esc_attr($door_id); ?>"
+             data-calendar-id="<?php echo esc_attr($calendar_id); ?>"
+             data-door-number="<?php echo intval($i); ?>"
+             <?php if ($door && !empty($door->image_url) && $user_has_opened): ?>
+                style="background-image: url('<?php echo esc_url($door->image_url); ?>'); background-size: cover; background-position: center;"
+             <?php endif; ?>>
 
-    <span class="door-number"><?php echo intval($i); ?></span>
+            <span class="door-number"><?php echo intval($i); ?></span>
 
-    <?php if ($door && !empty($door->image_url)): ?>
-        <?php if (!$user_has_opened): ?>
-            <!-- PRZED otwarciem - domyślny wygląd -->
-            <div class="door-default-content closed">
-                <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
-            </div>
-        <?php else: ?>
-            <!-- PO otwarciu - obrazek jako tło (już ustawione w style powyżej) -->
-            <!-- Dodajemy tylko przezroczysty overlay dla efektu wizualnego -->
-            <div class="door-image-overlay"></div>
-        <?php endif; ?>
-    <?php else: ?>
-        <!-- Brak obrazka - zawsze domyślny wygląd -->
-        <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
-            <?php if ($user_has_opened): ?>
-                <span class="door-icon">🎁</span>
+            <?php if ($door && !empty($door->image_url)): ?>
+                <?php if (!$user_has_opened): ?>
+                    <div class="door-default-content closed">
+                        <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
+                    </div>
+                <?php else: ?>
+                    <div class="door-image-overlay"></div>
+                <?php endif; ?>
             <?php else: ?>
-                <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
+                <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
+                    <?php if ($user_has_opened): ?>
+                        <span class="door-icon">🎁</span>
+                    <?php else: ?>
+                        <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
         </div>
-    <?php endif; ?>
-</div>
-    <?php endfor; ?>
+    <?php 
+        endfor; 
+    }
+    ?>
 </div>
 
 <style>

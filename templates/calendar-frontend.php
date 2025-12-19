@@ -58,18 +58,39 @@ $safe_settings = wp_parse_args($settings, array(
 
     <span class="door-number"><?php echo intval($i); ?></span>
 
-    <?php if ($door && !empty($door->image_url)): ?>
+    <?php 
+// Sprawdź czy istnieje obrazek motywu
+$theme_image_path = ADVENT_CALENDAR_PLUGIN_PATH . 'templates/thems/christmas/images/door-' . $i . '.png';
+$theme_image_url = '';
+
+if (file_exists($theme_image_path)) {
+    $theme_image_url = ADVENT_CALENDAR_PLUGIN_URL . 'templates/thems/christmas/images/door-' . $i . '.png';
+}
+
+if ($door && !empty($door->image_url)): ?>
+    <?php if (!$user_has_opened): ?>
+        <!-- PRZED otwarciem - obrazek użytkownika jako tło -->
+        <div class="door-default-content closed" style="background-image: url('<?php echo esc_url($theme_image_url ?: ADVENT_CALENDAR_PLUGIN_URL . "templates/thems/christmas/images/door-{$i}.png"); ?>'); background-size: cover; background-position: center;">
+            <div class="door-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
+                <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
+            </div>
+        </div>
+    <?php else: ?>
+        <!-- PO otwarciu - obrazek jako tło (już ustawione w style powyżej) -->
+        <div class="door-image-overlay"></div>
+    <?php endif; ?>
+<?php elseif ($theme_image_url): ?>
+    <!-- Obrazek motywu zamiast gradientu -->
+    <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?>" style="background-image: url('<?php echo esc_url($theme_image_url); ?>'); background-size: cover; background-position: center;">
         <?php if (!$user_has_opened): ?>
-            <!-- PRZED otwarciem - domyślny wygląd -->
-            <div class="door-default-content closed">
+            <div class="door-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
                 <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
             </div>
         <?php else: ?>
-            <!-- PO otwarciu - obrazek jako tło (już ustawione w style powyżej) -->
-            <!-- Dodajemy tylko przezroczysty overlay dla efektu wizualnego -->
-            <div class="door-image-overlay"></div>
+            <span class="door-icon">🎁</span>
         <?php endif; ?>
-    <?php else: ?>
+    </div>
+<?php else: ?>
         <!-- Brak obrazka - zawsze domyślny wygląd -->
         <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
             <?php if ($user_has_opened): ?>

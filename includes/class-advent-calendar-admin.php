@@ -4,6 +4,8 @@ class Advent_Calendar_Admin {
     public function __construct() {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
+        
+        // TE AKCJE AJAX MUSZĄ BYĆ TUTAJ - to jest POPRAWNE
         add_action('wp_ajax_advent_calendar_save', array($this, 'ajax_save_calendar'));
         add_action('wp_ajax_advent_calendar_delete', array($this, 'ajax_delete_calendar'));
         add_action('wp_ajax_advent_calendar_save_door', array($this, 'ajax_save_door'));
@@ -65,9 +67,14 @@ class Advent_Calendar_Admin {
             wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js', array(), '3.9.1', true);
         }
         
+        // WAŻNE: Sprawdź czy nonce jest generowany
+        $nonce = wp_create_nonce('advent_calendar_nonce');
+        error_log('Admin nonce generated: ' . $nonce);
+        
         wp_localize_script('advent-calendar-admin', 'adventCalendar', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('advent_calendar_nonce')
+            'nonce' => $nonce,
+            'debug' => true
         ));
     }
     
@@ -82,8 +89,184 @@ class Advent_Calendar_Admin {
     public function statistics_page() {
         include ADVENT_CALENDAR_PLUGIN_PATH . 'templates/statistics.php';
     }
-   
-   private function get_calendar_statistics($calendar_id) {
+    
+    // =============== FUNKCJE AJAX DLA ADMINA ===============
+    
+    public function ajax_save_calendar() {
+        error_log('=== ADMIN AJAX: SAVE CALENDAR ===');
+        
+        // Sprawdź czy request jest poprawny
+        if (!isset($_POST['nonce'])) {
+            error_log('ERROR: No nonce in request');
+            wp_send_json_error('Brak tokenu bezpieczeństwa');
+        }
+        
+        // Sprawdź nonce
+        $nonce_check = wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce');
+        error_log('Nonce check result: ' . ($nonce_check ? 'VALID' : 'INVALID'));
+        
+        if (!$nonce_check) {
+            wp_send_json_error('Błąd bezpieczeństwa (nonce)');
+        }
+        
+        // Sprawdź uprawnienia
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Brak uprawnień');
+        }
+        
+        // Sprawdź wymagane pola
+        if (empty($_POST['title'])) {
+            wp_send_json_error('Nazwa kalendarza jest wymagana');
+        }
+        
+        // Przygotuj dane
+        $data = array(
+            'title' => sanitize_text_field($_POST['title']),
+            'settings' => array(
+                'columns' => isset($_POST['columns']) ? intval($_POST['columns']) : 6,
+                'rows' => isset($_POST['rows']) ? intval($_POST['rows']) : 4,
+                'start_date' => isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : date('Y-12-01'),
+                'end_date' => isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : date('Y-12-24'),
+                'theme' => isset($_POST['theme']) ? sanitize_text_field($_POST['theme']) : 'christmas',
+                'default_animation' => isset($_POST['default_animation']) ? sanitize_text_field($_POST['default_animation']) : 'fade',
+                'snow_effect' => isset($_POST['snow_effect']) && $_POST['snow_effect'] == '1',
+                'confetti_effect' => isset($_POST['confetti_effect']) && $_POST['confetti_effect'] == '1',
+                'enable_stats' => isset($_POST['enable_stats']) && $_POST['enable_stats'] == '1'
+            )
+        );
+        
+        // Sprawdź czy to aktualizacja czy nowy kalendarz
+        if (isset($_POST['id']) && !empty($_POST['id'])) {
+            $data['id'] = intval($_POST['id']);
+        }
+        
+        error_log('Saving calendar data: ' . print_r($data, true));
+        
+        // Zapisz kalendarz
+        $calendar_id = Advent_Calendar::save_calendar($data);
+        
+        if ($calendar_id) {
+            $response = array(
+                'id' => $calendar_id,
+                'message' => 'Kalendarz zapisany pomyślnie!'
+            );
+            
+            // Jeśli to nowy kalendarz, dodaj przekierowanie
+            if (!isset($_POST['id'])) {
+                $response['redirect'] = admin_url('admin.php?page=advent-calendar-new&calendar_id=' . $calendar_id);
+            }
+            
+            wp_send_json_success($response);
+        } else {
+            wp_send_json_error('Błąd podczas zapisywania kalendarza. Sprawdź czy wszystkie wymagane pola są wypełnione.');
+        }
+    }
+    
+    public function ajax_delete_calendar() {
+        error_log('=== ADMIN AJAX: DELETE CALENDAR ===');
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce')) {
+            wp_send_json_error('Błąd bezpieczeństwa (nonce)');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Brak uprawnień');
+        }
+        
+        $calendar_id = intval($_POST['calendar_id']);
+        $result = Advent_Calendar::delete_calendar($calendar_id);
+        
+        if ($result) {
+            wp_send_json_success('Kalendarz usunięty pomyślnie!');
+        } else {
+            wp_send_json_error('Błąd podczas usuwania kalendarza');
+        }
+    }
+    
+    public function ajax_save_door() {
+        error_log('=== ADMIN AJAX: SAVE DOOR ===');
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce')) {
+            wp_send_json_error('Błąd bezpieczeństwa (nonce)');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Brak uprawnień');
+        }
+        
+        if (empty($_POST['calendar_id']) || empty($_POST['door_number'])) {
+            wp_send_json_error('ID kalendarza i numer drzwi są wymagane');
+        }
+        
+        $data = array(
+            'calendar_id' => intval($_POST['calendar_id']),
+            'door_number' => intval($_POST['door_number']),
+            'title' => sanitize_text_field($_POST['title'] ?? ''),
+            'content' => wp_kses_post($_POST['content'] ?? ''),
+            'image_url' => esc_url_raw($_POST['image_url'] ?? ''),
+            'link_url' => esc_url_raw($_POST['link_url'] ?? ''),
+            'door_type' => sanitize_text_field($_POST['door_type'] ?? 'modal'),
+            'animation' => sanitize_text_field($_POST['animation'] ?? 'fade'),
+            'styles' => array(),
+            'custom_css' => sanitize_textarea_field($_POST['custom_css'] ?? ''),
+            'unlock_date' => sanitize_text_field($_POST['unlock_date'] ?? '')
+        );
+        
+        if (isset($_POST['door_id']) && !empty($_POST['door_id'])) {
+            $data['id'] = intval($_POST['door_id']);
+        }
+        
+        $door_id = Advent_Calendar::save_door($data);
+        
+        if ($door_id) {
+            wp_send_json_success(array(
+                'id' => $door_id,
+                'message' => 'Drzwi zapisane pomyślnie!'
+            ));
+        } else {
+            wp_send_json_error('Błąd podczas zapisywania drzwi');
+        }
+    }
+    
+    public function ajax_get_door() {
+        error_log('=== ADMIN AJAX: GET DOOR ===');
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce')) {
+            wp_send_json_error('Błąd bezpieczeństwa (nonce)');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Brak uprawnień');
+        }
+        
+        $door_id = intval($_POST['door_id']);
+        $door = Advent_Calendar::get_door($door_id);
+        
+        if ($door) {
+            wp_send_json_success($door);
+        } else {
+            wp_send_json_error('Drzwi nie znalezione');
+        }
+    }
+    
+    public function get_calendar_stats_ajax() {
+        error_log('=== ADMIN AJAX: GET STATS ===');
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'advent_calendar_nonce')) {
+            wp_send_json_error('Błąd bezpieczeństwa (nonce)');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Brak uprawnień');
+        }
+        
+        $calendar_id = intval($_POST['calendar_id']);
+        $stats = $this->get_calendar_statistics($calendar_id);
+        
+        wp_send_json_success($stats);
+    }
+    
+    private function get_calendar_statistics($calendar_id) {
         global $wpdb;
         
         $total_opens = $wpdb->get_var($wpdb->prepare(

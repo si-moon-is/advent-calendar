@@ -295,6 +295,43 @@ class Advent_Calendar {
         // Sprawdź czy obecna data jest równa lub późniejsza od daty odblokowania
         return $current_date >= $door_date;
     }
+
+    /**
+ * Sprawdź czy motyw ma dostępne obrazki drzwi
+ */
+public static function theme_has_door_images($theme) {
+    $theme_paths = array(
+        ADVENT_CALENDAR_PLUGIN_PATH . "templates/themes/{$theme}/images/door-1.png",
+        ADVENT_CALENDAR_PLUGIN_PATH . "templates/thems/{$theme}/images/door-1.png"
+    );
+    
+    foreach ($theme_paths as $path) {
+        if (file_exists($path)) {
+            return dirname($path); // Zwróć ścieżkę do katalogu
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Pobierz URL obrazka drzwi dla motywu
+ */
+public static function get_theme_door_image_url($theme, $door_number) {
+    $theme_paths = array(
+        "templates/themes/{$theme}/images/door-{$door_number}.png",
+        "templates/thems/{$theme}/images/door-{$door_number}.png"
+    );
+    
+    foreach ($theme_paths as $path) {
+        $full_path = ADVENT_CALENDAR_PLUGIN_PATH . $path;
+        if (file_exists($full_path)) {
+            return ADVENT_CALENDAR_PLUGIN_URL . $path;
+        }
+    }
+    
+    return false;
+}
     
     public static function has_user_opened_door($door_id) {
         global $wpdb;

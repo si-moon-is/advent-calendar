@@ -56,54 +56,43 @@ $safe_settings = wp_parse_args($settings, array(
         style="background-image: url('<?php echo esc_url($door->image_url); ?>'); background-size: cover; background-position: center;"
      <?php endif; ?>>
 
-        <span class="door-number"><?php echo intval($i); ?></span>
-
     <?php
-    // Zawsze używaj obrazków motywu jeśli istnieją
-    $current_theme = isset($settings['theme']) ? $settings['theme'] : 'christmas';
-    $theme_image_path = ADVENT_CALENDAR_PLUGIN_PATH . 'templates/thems/' . $current_theme . '/images/door-' . $i . '.png';
-    $theme_image_url = ADVENT_CALENDAR_PLUGIN_URL . 'templates/thems/' . $current_theme . '/images/door-' . $i . '.png';
-    
-    $image_to_use = '';
-    $has_image = false;
-    
-    // Sprawdź czy obrazek motywu istnieje
-    if (file_exists($theme_image_path)) {
-        $image_to_use = $theme_image_url;
-        $has_image = true;
-    }
-    
-    // Jeśli drzwi mają własny obrazek i są otwarte, użyj go
-    if ($door && !empty($door->image_url) && $user_has_opened) {
-        $image_to_use = $door->image_url;
-        $has_image = true;
-    }
-    ?>
-    
-    <?php if ($has_image && $user_has_opened): ?>
-        <!-- OTWARTE drzwi z obrazkiem -->
-        <div class="door-content" style="background-image: url('<?php echo esc_url($image_to_use); ?>'); background-size: cover; background-position: center; width: 100%; height: 100%;"></div>
-        <div class="door-image-overlay"></div>
-    
-    <?php elseif ($has_image && !$user_has_opened): ?>
-        <!-- ZAMKNIĘTE drzwi z obrazkiem motywu -->
-        <div class="door-default-content closed" style="background-image: url('<?php echo esc_url($image_to_use); ?>'); background-size: cover; background-position: center;">
-            <div class="door-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
-                <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
-            </div>
+// Sprawdź obrazek motywu
+$current_theme = isset($settings['theme']) ? $settings['theme'] : 'christmas';
+$theme_image_path = ADVENT_CALENDAR_PLUGIN_PATH . 'templates/thems/' . $current_theme . '/images/door-' . $i . '.png';
+$theme_image_url = ADVENT_CALENDAR_PLUGIN_URL . 'templates/thems/' . $current_theme . '/images/door-' . $i . '.png';
+
+$has_theme_image = file_exists($theme_image_path);
+?>
+
+<span class="door-number"><?php echo intval($i); ?></span>
+
+<?php if ($has_theme_image && !$user_has_opened): ?>
+    <!-- ZAMKNIĘTE drzwi z OBRAZKIEM MOTYWU -->
+    <div class="door-theme-image" style="background-image: url('<?php echo esc_url($theme_image_url); ?>'); background-size: cover; background-position: center; width: 100%; height: 100%; position: relative;">
+        <div class="door-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4);"></div>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+            <?php echo intval($i); ?>
         </div>
-    
-    <?php else: ?>
-        <!-- Bez obrazka - gradient -->
-        <div class="door-default-content <?php echo $user_has_opened ? 'opened' : 'closed'; ?>">
-            <?php if ($user_has_opened): ?>
-                <span class="door-icon">🎁</span>
-            <?php else: ?>
-                <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
-</div>
+    </div>
+
+<?php elseif ($user_has_opened && $door && !empty($door->image_url)): ?>
+    <!-- OTWARTE drzwi z OBRAZKIEM UŻYTKOWNIKA -->
+    <div class="door-content" style="background-image: url('<?php echo esc_url($door->image_url); ?>'); background-size: cover; background-position: center; width: 100%; height: 100%;"></div>
+    <div class="door-image-overlay"></div>
+
+<?php elseif ($user_has_opened): ?>
+    <!-- OTWARTE drzwi bez obrazka -->
+    <div class="door-default-content opened">
+        <span class="door-icon">🎁</span>
+    </div>
+
+<?php else: ?>
+    <!-- ZAMKNIĘTE drzwi bez obrazka motywu -->
+    <div class="door-default-content closed">
+        <div class="default-christmas-image door-<?php echo intval($i); ?>"></div>
+    </div>
+<?php endif; ?>
     <?php endfor; ?>
 </div>
 

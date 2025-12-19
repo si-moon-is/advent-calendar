@@ -47,7 +47,13 @@ if (!file_exists(ADVENT_CALENDAR_PLUGIN_PATH . 'templates/thems/christmas/images
             
             // Użyj obrazka z motywu tylko jeśli istnieje, w przeciwnym razie użyj gradientu
             if (!$use_default_gradients) {
-                $default_image_url = $theme_images_path . 'door-' . $i . '.png';
+                //$default_image_url = $theme_images_path . 'door-' . $i . '.png';
+                $default_image_path = ADVENT_CALENDAR_PLUGIN_PATH . 'templates/thems/christmas/images/door-' . $i . '.png';
+$default_image_url = '';
+
+if (file_exists($default_image_path)) {
+    $default_image_url = ADVENT_CALENDAR_PLUGIN_URL . 'templates/thems/christmas/images/door-' . $i . '.png';
+}
             }
         ?>
             
